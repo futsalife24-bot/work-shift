@@ -4,9 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>勤務表ツール</title>
-<link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#2563eb">
-<link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root{
   --bg:#f4f5f7; --panel:#ffffff; --ink:#1e2430; --sub:#68707e;
@@ -59,6 +56,7 @@ input[type=number]{width:76px;}
 .chk{display:inline-flex;align-items:center;gap:5px;margin:3px 10px 3px 0;font-size:13px;
   border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:#fff;cursor:pointer;user-select:none;}
 .chk.on{background:#e8f0fe;border-color:var(--accent);color:var(--accent);font-weight:700;}
+.chk.locked{opacity:.65;cursor:not-allowed;box-shadow:inset 0 0 0 1px #c7d7fb;}
 .pill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11px;background:#eef1f5;color:var(--sub);}
 .pill.reg{background:#e5edff;color:#1d4ed8;} .pill.con{background:#e7f7ef;color:#047857;} .pill.ind{background:#f4e8ff;color:#7c3aed;}
 .note{font-size:12.5px;color:var(--sub);line-height:1.6;}
@@ -500,6 +498,10 @@ function migrateState(){
     if(a.midOK===undefined){ a.midOK=false; changed=true; }
     if(a.sat8===undefined){ a.sat8=(a.name==="34区"); changed=true; }
   }
+  // 夜間配達の担当可能方面(既存データは未設定で補完)
+  for(const s of state.staff){
+    if(!Array.isArray(s.nightAreas)){ s.nightAreas=[]; changed=true; }
+  }
   // バックアップ督促用フィールド(A-2)
   if(state.settings.lastExport===undefined){ state.settings.lastExport=""; changed=true; }
   if(state.settings.lastChangeAt===undefined){ state.settings.lastChangeAt=""; changed=true; }
@@ -697,18 +699,51 @@ function dayEval(ctx, g, d){
       uncovered = unc.map(a=>a.name);
     }
     matchInfo={pool, areaList, m};
-  } else {
-    // 土日祝: 全区分担カバー(土日祝用の担当可能区)。ただし「8時限定区」(sat8)は別ルール。
-    const tgt = ctx.areas.filter(a=>!a.mon && !a.sat8);
-    const covered = new Set();
-    for(const s of attAll){
-      for(const id of (ctx.del[s].areasH||[])) covered.add(id);
+
+    // 夜間配達: 平日は中勤2人が海側・山側を別々に担当できること
+    const sea=attMd.some(s=>(ctx.del[s].nightAreas||[]).includes("sea"));
+    const mountain=attMd.some(s=>(ctx.del[s].nightAreas||[]).includes("mountain"));
+    const splitOK=attMd.some(s=>(ctx.del[s].nightAreas||[]).includes("sea") &&
+      attMd.some(t=>t!==s && (ctx.del[t].nightAreas||[]).includes("mountain")));
+    if(!sea || !mountain || !splitOK){
+      cost += HARD;
+      warns.push({lv:"hard", d, msg:`${mdLabel(inf.ds)} 夜間配達(海側・山側)を中勤2人で分担できません`});
     }
-    const unc = tgt.filter(a=>!covered.has(a.id));
-    if(unc.length){
-      cost += unc.length*450;
-      warns.push({lv:"soft", d, msg:`${mdLabel(inf.ds)} カバー不能区: ${unc.map(a=>a.name).join("・")}`});
-      uncovered = unc.map(a=>a.name);
+  } else {
+    // 土日祝: 各出勤者3〜4区の範囲で全区を分担できること(社員間の区重複は可)
+    const tgt = ctx.areas.filter(a=>!a.mon && (!a.sat8 || inf.dtype==="sat"));
+    const workers=attAll.filter(s=>g[s][d]!=="TSU");
+    const elig=tgt.map(a=>workers.filter(s=>{
+      if(!(ctx.del[s].areasH||[]).includes(a.id)) return false;
+      return !a.sat8 || g[s][d]==="W8";
+    }));
+    const order=tgt.map((a,i)=>i).sort((i,j)=>elig[i].length-elig[j].length);
+    const cnt=new Array(workers.length).fill(0), wi=new Map(workers.map((s,i)=>[s,i]));
+    const memo=new Set();
+    const cover=(pos)=>{
+      if(pos===order.length){
+        return workers.every((s,i)=>{
+          const possible=tgt.filter((a,k)=>elig[k].includes(s)).length;
+          return cnt[i]<=4 && possible>=3;
+        });
+      }
+      const key=pos+"|"+cnt.join(",");
+      if(memo.has(key)) return false;
+      const ai=order[pos];
+      for(const s of elig[ai]){
+        const i=wi.get(s);
+        if(cnt[i]>=4) continue;
+        cnt[i]++;
+        if(cover(pos+1)) return true;
+        cnt[i]--;
+      }
+      memo.add(key); return false;
+    };
+    const balancedOK=workers.length>0 && cover(0);
+    if(!balancedOK){
+      cost += 450;
+      warns.push({lv:"soft", d, msg:`${mdLabel(inf.ds)} 全区を各人3〜4区で分担できません`});
+      uncovered=tgt.filter((a,i)=>elig[i].length===0).map(a=>a.name);
     }
     // 8時限定区(sat8): 5人体制の日(dtype==="sat"=土曜・単発祝日)のみ、8時勤務者の中でのカバー判定。3人体制の日(dtype==="sun")はカバー要件から完全除外。
     if(inf.dtype==="sat"){
@@ -727,6 +762,15 @@ function dayEval(ctx, g, d){
           uncovered = uncovered.concat(unc8.map(a=>a.name));
         }
       }
+    }
+    // 夜間配達: 土日祝は中勤1人が海側・山側の両方を担当
+    const nightOK=attMd.some(s=>{
+      const q=ctx.del[s].nightAreas||[];
+      return q.includes("sea") && q.includes("mountain");
+    });
+    if(!nightOK){
+      cost += HARD;
+      warns.push({lv:"hard", d, msg:`${mdLabel(inf.ds)} 中勤者が夜間配達の海側・山側両方を担当できません`});
     }
   }
   return {cost, warns, matchInfo, counts:{c8,c9,cm}, uncovered};
@@ -1784,7 +1828,7 @@ $("#btnAddStaff").addEventListener("click",()=>editStaff(null));
 function editStaff(id){
   const st = id ? state.staff.find(s=>s.id===id) :
     { id:uid(), name:"", type:"con", order:(state.staff.length+1)*10,
-      weekendOK:true, sh8:true, sh9:false, smd:false, areasW:[], areasH:[], keiZan:0, nenZan:0 };
+      weekendOK:true, sh8:true, sh9:false, smd:false, areasW:[], areasH:[], nightAreas:[], keiZan:0, nenZan:0 };
   const isNew=!id;
   const chip=(a,list)=>`<span class="chk ${list.includes(a.id)?"on":""}" data-aid="${a.id}">${esc(a.name)}</span>`;
   openModal(`
@@ -1804,8 +1848,16 @@ function editStaff(id){
       <span class="chk ${st.smd?"on":""}" id="stMd">中勤</span>
       <h3>平日の担当可能区</h3>
       <div class="areaChips" id="stAw">${state.areas.map(a=>chip(a,st.areasW||[])).join("")}</div>
-      <h3>土日祝の担当可能区</h3>
-      <div class="areaChips" id="stAh">${state.areas.filter(a=>!a.mon).map(a=>chip(a,st.areasH||[])).join("")}</div>
+      <div id="stWeekendAreas" style="${st.weekendOK===false?"display:none":""}">
+        <h3>土日祝の担当可能区</h3>
+        <p class="note">平日で選択中の区は自動選択され、土日祝側だけでは解除できません。</p>
+        <div class="areaChips" id="stAh">${state.areas.filter(a=>!a.mon).map(a=>chip(a,st.areasH||[])).join("")}</div>
+      </div>
+      <h3>夜間配達の担当区</h3>
+      <div class="areaChips" id="stNight">
+        <span class="chk ${(st.nightAreas||[]).includes("sea")?"on":""}" data-night="sea">海側</span>
+        <span class="chk ${(st.nightAreas||[]).includes("mountain")?"on":""}" data-night="mountain">山側</span>
+      </div>
     </div>
     <h3>年休関係</h3>
     <div class="row">消化必須残(計年/前年度繰越) <input type="number" id="stKei" value="${st.keiZan||0}">日</div>
@@ -1819,8 +1871,30 @@ function editStaff(id){
     </div>
   `);
   const tgl=el=>el.addEventListener("click",()=>el.classList.toggle("on"));
-  ["#stWk","#stH8","#stH9","#stMd"].forEach(s=>{ const el=$(s); if(el)tgl(el); });
-  $$("#stAw .chk, #stAh .chk").forEach(tgl);
+  ["#stH8","#stH9","#stMd"].forEach(s=>{ const el=$(s); if(el)tgl(el); });
+  $$("#stNight .chk").forEach(tgl);
+  const syncWeekendAreas=()=>{
+    const wkOn=$("#stWk").classList.contains("on");
+    $("#stWeekendAreas").style.display=wkOn?"":"none";
+    const weekday=new Set($$("#stAw .chk.on").map(c=>c.dataset.aid));
+    $$("#stAh .chk").forEach(c=>{
+      const locked=wkOn && weekday.has(c.dataset.aid);
+      if(locked) c.classList.add("on");
+      c.classList.toggle("locked",locked);
+    });
+  };
+  $("#stWk").addEventListener("click",()=>{
+    $("#stWk").classList.toggle("on");
+    syncWeekendAreas();
+  });
+  $$("#stAw .chk").forEach(c=>c.addEventListener("click",()=>{
+    c.classList.toggle("on");
+    syncWeekendAreas();
+  }));
+  $$("#stAh .chk").forEach(c=>c.addEventListener("click",()=>{
+    if(!c.classList.contains("locked")) c.classList.toggle("on");
+  }));
+  syncWeekendAreas();
   $("#stType").addEventListener("change",()=>{
     $("#stDelOnly").style.display = $("#stType").value==="ind" ? "none":"";
   });
@@ -1833,7 +1907,8 @@ function editStaff(id){
     st.sh9=$("#stH9")?.classList.contains("on");
     st.smd=$("#stMd")?.classList.contains("on");
     st.areasW=$$("#stAw .chk.on").map(c=>c.dataset.aid);
-    st.areasH=$$("#stAh .chk.on").map(c=>c.dataset.aid);
+    st.areasH=st.weekendOK ? $$("#stAh .chk.on").map(c=>c.dataset.aid) : [];
+    st.nightAreas=$$("#stNight .chk.on").map(c=>c.dataset.night);
     st.keiZan=Number($("#stKei").value)||0;
     st.nenZan=Number($("#stNen").value)||0;
     if(isNew) state.staff.push(st);
@@ -2005,7 +2080,7 @@ function loadDemo(){
   const staff=[];
   const mk=(name,type,i,opt)=>Object.assign({
     id:uid(), name, type, order:(i+1)*10, weekendOK:true,
-    sh8:true, sh9:false, smd:false, areasW:[], areasH:[], keiZan:0, nenZan:0}, opt);
+    sh8:true, sh9:false, smd:false, areasW:[], areasH:[], nightAreas:[], keiZan:0, nenZan:0}, opt);
   const regN=["佐藤","鈴木","高橋","田中","伊藤","渡辺"];
   const conN=["山本","中村","小林","加藤","吉田","山田","佐々木","山口","松本"];
   regN.forEach((nm,i)=>{
@@ -2036,6 +2111,7 @@ function loadDemo(){
     const set=new Set();
     for(let k=0;k<8;k++) set.add(allIds[(i*5+k)%allIds.length]);
     s.areasH=[...set];
+    if(s.smd) s.nightAreas=["sea","mountain"];
   });
   state.staff=staff;
   state.cycles={};
