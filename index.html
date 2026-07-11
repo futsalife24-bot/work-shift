@@ -322,7 +322,7 @@ table.ps th.teamHd{font-size:10pt;}
     <h2>配達区</h2>
     <table class="mini" id="areaTable"></table>
     <div class="row"><button class="btn small" id="btnAddArea">+ 区を追加</button></div>
-    <p class="note">「中勤可」=中勤者が受け持てる区(中勤はこの中から割当。チェックなしの区は8時のみ)。8時はどの区も担当可。「連休明けのみ」=マンション区など、前2日が土日祝だった平日(通常の月曜・月曜祝日明けの火曜など)だけ立つ区。8時の増員目標も同じ日に適用されます。</p>
+    <p class="note">「中勤可」=中勤者が受け持てる区(中勤はこの中から割当。チェックなしの区は8時のみ)。8時はどの区も担当可。「連休明けのみ」=マンション区など、前2日が土日祝だった平日(通常の月曜・月曜祝日明けの火曜など)だけ立つ区。8時の増員目標も同じ日に適用されます。「土曜8時のみ」=土曜だけ8時勤務者によるカバーが必要で、日曜祝日はカバー不要な区(34区)。</p>
   </div>
 
   <div class="panel">
@@ -471,8 +471,9 @@ function defaultAreas(){
   // 中勤可 = 27区・29区・30E区・32区(中勤のメイン4区)
   const names=["26区","27区","28区","29区","30区","30E区","31区","32区","33区","34区","35区","36区"];
   const midOKs=["27区","29区","30E区","32区"];
-  const a=names.map((nm,i)=>({id:"a"+(i+1), name:nm, midOK:midOKs.includes(nm), mon:false}));
-  a.push({id:"am", name:"マンション区", midOK:false, mon:true});
+  const sat8s=["34区"];
+  const a=names.map((nm,i)=>({id:"a"+(i+1), name:nm, midOK:midOKs.includes(nm), mon:false, sat8:sat8s.includes(nm)}));
+  a.push({id:"am", name:"マンション区", midOK:false, mon:true, sat8:false});
   return a;
 }
 function migrateState(){
@@ -497,6 +498,7 @@ function migrateState(){
       changed=true;
     }
     if(a.midOK===undefined){ a.midOK=false; changed=true; }
+    if(a.sat8===undefined){ a.sat8=(a.name==="34区"); changed=true; }
   }
   // バックアップ督促用フィールド(A-2)
   if(state.settings.lastExport===undefined){ state.settings.lastExport=""; changed=true; }
@@ -696,8 +698,8 @@ function dayEval(ctx, g, d){
     }
     matchInfo={pool, areaList, m};
   } else {
-    // 土日祝: 全区分担カバー(土日祝用の担当可能区)
-    const tgt = ctx.areas.filter(a=>!a.mon);
+    // 土日祝: 全区分担カバー(土日祝用の担当可能区)。ただし「土曜8時限定区」(sat8)は別ルール。
+    const tgt = ctx.areas.filter(a=>!a.mon && !a.sat8);
     const covered = new Set();
     for(const s of attAll){
       for(const id of (ctx.del[s].areasH||[])) covered.add(id);
@@ -707,6 +709,24 @@ function dayEval(ctx, g, d){
       cost += unc.length*450;
       warns.push({lv:"soft", d, msg:`${mdLabel(inf.ds)} カバー不能区: ${unc.map(a=>a.name).join("・")}`});
       uncovered = unc.map(a=>a.name);
+    }
+    // 土曜8時限定区(sat8): 祝日でない土曜のみ、8時勤務者の中でのカバー判定。日曜・祝日はカバー要件から完全除外。
+    if(inf.dow===6 && !inf.hol){
+      const sat8Areas = ctx.areas.filter(a=>!a.mon && a.sat8);
+      if(sat8Areas.length){
+        const covered8 = new Set();
+        for(const s of att8){
+          for(const id of (ctx.del[s].areasH||[])) covered8.add(id);
+        }
+        const unc8 = sat8Areas.filter(a=>!covered8.has(a.id));
+        if(unc8.length){
+          cost += unc8.length*450;
+          for(const a of unc8){
+            warns.push({lv:"soft", d, msg:`${mdLabel(inf.ds)} ${a.name}(土曜8時)を配達できる8時勤務者がいません`});
+          }
+          uncovered = uncovered.concat(unc8.map(a=>a.name));
+        }
+      }
     }
   }
   return {cost, warns, matchInfo, counts:{c8,c9,cm}, uncovered};
@@ -1857,11 +1877,12 @@ function renderConf(){
   }));
 }
 function renderAreaTable(){
-  $("#areaTable").innerHTML="<tr><th>区名</th><th>中勤可</th><th>連休明けのみ</th><th></th></tr>"+
+  $("#areaTable").innerHTML="<tr><th>区名</th><th>中勤可</th><th>連休明けのみ</th><th>土曜8時のみ</th><th></th></tr>"+
     state.areas.map((a,i)=>`
     <tr><td><input class="wide" data-i="${i}" data-k="name" value="${esc(a.name)}"></td>
       <td><input type="checkbox" data-i="${i}" data-k="midOK" ${a.midOK?"checked":""}></td>
       <td><input type="checkbox" data-i="${i}" data-k="mon" ${a.mon?"checked":""}></td>
+      <td><input type="checkbox" data-i="${i}" data-k="sat8" ${a.sat8?"checked":""}></td>
       <td><button class="btn small danger" data-i="${i}" data-k="del">✕</button></td></tr>`).join("");
   $$("#areaTable [data-k]").forEach(el=>{
     const i=+el.dataset.i, k=el.dataset.k;
@@ -1873,12 +1894,13 @@ function renderAreaTable(){
       if(k==="name") state.areas[i].name=el.value.trim();
       else if(k==="midOK") state.areas[i].midOK=el.checked;
       else if(k==="mon") state.areas[i].mon=el.checked;
+      else if(k==="sat8") state.areas[i].sat8=el.checked;
       save();
     });
   });
 }
 $("#btnAddArea").addEventListener("click",()=>{
-  state.areas.push({id:uid(), name:"新しい区", midOK:false, mon:false});
+  state.areas.push({id:uid(), name:"新しい区", midOK:false, mon:false, sat8:false});
   save(); renderAreaTable();
 });
 $("#cfTeam").addEventListener("change",()=>{ state.settings.team=$("#cfTeam").value; save(); });
