@@ -1,7 +1,7 @@
 /* 勤務表ツール Service Worker
    方針: ページ本体はネットワーク優先(更新が自動で届く)、オフライン時はキャッシュで起動 */
-const CACHE = "kinmuhyo-v3";
-const ASSETS = ["./", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
+const CACHE = "kinmuhyo-v4";
+const ASSETS = ["./", "manifest.webmanifest", "icon-192-v2.png", "icon-512-v2.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(
