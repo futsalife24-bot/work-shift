@@ -244,7 +244,6 @@ table.ps th.teamHd{font-size:10pt;}
       <button class="btn" id="btnResolve" title="ロック・固定入力を守って作り直す">🎲 別案</button>
       <span class="chk" id="chkArea">区表示</span>
       <span class="chk" id="btnFit">🔍 全体</span>
-      <button class="btn small" id="btnLand">⤢ 横画面</button>
       <button class="btn small danger" id="btnClearCells">クリア</button>
     </div>
     <div id="warnBox"></div>
@@ -1589,40 +1588,48 @@ function applyFit(){
   wrap.style.height=Math.min(availH, h*scale+pad)+"px";
 }
 // 全体フィット中はタップ編集を無効化し、代わりにタップしたセルへ等倍復帰してスクロール(C-2)
-function exitFitAndFocus(td){
+async function exitFitAndFocus(td){
   ui.fit=false;
   $("#btnFit").classList.remove("on");
-  applyFit();
+  await exitLand();
   requestAnimationFrame(()=>td.scrollIntoView({block:"center", inline:"center"}));
 }
 // フォント読込完了後に寸法が変わることがあるため再フィット
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{ if(ui.fit) applyFit(); });
 if(window.visualViewport) window.visualViewport.addEventListener("resize",()=>{ if(ui.fit) applyFit(); });
 window.addEventListener("orientationchange",()=>{ setTimeout(()=>{ if(ui.fit) applyFit(); },300); });
-$("#btnFit").addEventListener("click",()=>{
+$("#btnFit").addEventListener("click",async()=>{
   ui.fit=!ui.fit;
   $("#btnFit").classList.toggle("on",ui.fit);
-  applyFit();
+  if(ui.fit) await enterLand();
+  else await exitLand();
 });
 window.addEventListener("resize",()=>{ if(ui.fit) applyFit(); });
 /* ---- 横画面モード ---- */
-$("#btnLand").addEventListener("click",async()=>{
+async function enterLand(){
   document.body.classList.add("landmode");
   try{ await document.documentElement.requestFullscreen(); }catch(e){}
   try{ if(screen.orientation && screen.orientation.lock) await screen.orientation.lock("landscape"); }catch(e){}
-  if(ui.fit) applyFit();
-});
+  applyFit();
+}
 async function exitLand(){
   document.body.classList.remove("landmode");
   try{ if(screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); }catch(e){}
   if(document.fullscreenElement){ try{ await document.exitFullscreen(); }catch(e){} }
-  if(ui.fit) applyFit();
+  applyFit();
 }
-$("#btnLandExit").addEventListener("click",exitLand);
+$("#btnLandExit").addEventListener("click",async()=>{
+  ui.fit=false;
+  $("#btnFit").classList.remove("on");
+  await exitLand();
+});
 document.addEventListener("fullscreenchange",()=>{
   if(!document.fullscreenElement && document.body.classList.contains("landmode")){
     document.body.classList.remove("landmode");
+    ui.fit=false;
+    $("#btnFit").classList.remove("on");
     try{ if(screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); }catch(e){}
+    applyFit();
   }
 });
 function undoLastGen(){
