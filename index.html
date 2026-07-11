@@ -1808,7 +1808,7 @@ function renderStaffList(){
     const meta=[];
     if(s.type!=="ind"){
       meta.push((s.weekendOK===false?"土日祝×":"土日祝○"));
-      const sh=[]; if(s.sh8)sh.push("8時"); if(s.sh9)sh.push("9時"); if(s.smd)sh.push("中勤");
+      const sh=[]; if(s.sh8)sh.push("8時"); if(s.sh9||s.smd)sh.push("9時・中勤");
       meta.push(sh.join("・")||"適性なし");
       meta.push(`平日${(s.areasW||[]).length}区/土日祝${(s.areasH||[]).length}区`);
     }
@@ -1844,8 +1844,7 @@ function editStaff(id){
       <h3>勤務可否</h3>
       <span class="chk ${st.weekendOK!==false?"on":""}" id="stWk">土日祝勤務可</span>
       <span class="chk ${st.sh8?"on":""}" id="stH8">8時</span>
-      <span class="chk ${st.sh9?"on":""}" id="stH9">9時</span>
-      <span class="chk ${st.smd?"on":""}" id="stMd">中勤</span>
+      <span class="chk ${st.sh9||st.smd?"on":""}" id="stLate">9時・中勤</span>
       <h3>平日の担当可能区</h3>
       <div class="areaChips" id="stAw">${state.areas.map(a=>chip(a,st.areasW||[])).join("")}</div>
       <div id="stWeekendAreas" style="${st.weekendOK===false?"display:none":""}">
@@ -1853,10 +1852,12 @@ function editStaff(id){
         <p class="note">平日で選択中の区は自動選択され、土日祝側だけでは解除できません。</p>
         <div class="areaChips" id="stAh">${state.areas.filter(a=>!a.mon).map(a=>chip(a,st.areasH||[])).join("")}</div>
       </div>
-      <h3>夜間配達の担当区</h3>
-      <div class="areaChips" id="stNight">
-        <span class="chk ${(st.nightAreas||[]).includes("sea")?"on":""}" data-night="sea">海側</span>
-        <span class="chk ${(st.nightAreas||[]).includes("mountain")?"on":""}" data-night="mountain">山側</span>
+      <div id="stNightWrap" style="${st.sh9||st.smd?"":"display:none"}">
+        <h3>夜間配達の担当区</h3>
+        <div class="areaChips" id="stNight">
+          <span class="chk ${(st.nightAreas||[]).includes("sea")?"on":""}" data-night="sea">海側</span>
+          <span class="chk ${(st.nightAreas||[]).includes("mountain")?"on":""}" data-night="mountain">山側</span>
+        </div>
       </div>
     </div>
     <h3>年休関係</h3>
@@ -1871,8 +1872,16 @@ function editStaff(id){
     </div>
   `);
   const tgl=el=>el.addEventListener("click",()=>el.classList.toggle("on"));
-  ["#stH8","#stH9","#stMd"].forEach(s=>{ const el=$(s); if(el)tgl(el); });
+  ["#stH8"].forEach(s=>{ const el=$(s); if(el)tgl(el); });
   $$("#stNight .chk").forEach(tgl);
+  const syncNightAreas=()=>{
+    const on=$("#stLate").classList.contains("on");
+    $("#stNightWrap").style.display=on?"":"none";
+  };
+  $("#stLate").addEventListener("click",()=>{
+    $("#stLate").classList.toggle("on");
+    syncNightAreas();
+  });
   const syncWeekendAreas=()=>{
     const wkOn=$("#stWk").classList.contains("on");
     $("#stWeekendAreas").style.display=wkOn?"":"none";
@@ -1895,6 +1904,7 @@ function editStaff(id){
     if(!c.classList.contains("locked")) c.classList.toggle("on");
   }));
   syncWeekendAreas();
+  syncNightAreas();
   $("#stType").addEventListener("change",()=>{
     $("#stDelOnly").style.display = $("#stType").value==="ind" ? "none":"";
   });
@@ -1904,11 +1914,12 @@ function editStaff(id){
     st.order=Number($("#stOrder").value)||0;
     st.weekendOK=$("#stWk")?.classList.contains("on");
     st.sh8=$("#stH8")?.classList.contains("on");
-    st.sh9=$("#stH9")?.classList.contains("on");
-    st.smd=$("#stMd")?.classList.contains("on");
+    const lateOK=$("#stLate")?.classList.contains("on");
+    st.sh9=lateOK;
+    st.smd=lateOK;
     st.areasW=$$("#stAw .chk.on").map(c=>c.dataset.aid);
     st.areasH=st.weekendOK ? $$("#stAh .chk.on").map(c=>c.dataset.aid) : [];
-    st.nightAreas=$$("#stNight .chk.on").map(c=>c.dataset.night);
+    st.nightAreas=lateOK ? $$("#stNight .chk.on").map(c=>c.dataset.night) : [];
     st.keiZan=Number($("#stKei").value)||0;
     st.nenZan=Number($("#stNen").value)||0;
     if(isNew) state.staff.push(st);
