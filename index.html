@@ -2405,6 +2405,11 @@ initCurCycle();
 renderAll();
 lockPortrait();
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden && !ui.fit) lockPortrait(); });
+// Android端末によっては起動直後の向き固定が拒否されるため、最初の操作時にも再試行する
+document.addEventListener("pointerdown",()=>{ if(!ui.fit) lockPortrait(); },{capture:true});
+if(screen.orientation && screen.orientation.addEventListener){
+  screen.orientation.addEventListener("change",()=>{ if(!ui.fit) lockPortrait(); });
+}
 
 </script>
 <script>
