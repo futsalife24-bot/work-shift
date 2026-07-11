@@ -198,7 +198,6 @@ table.mini input.wide{width:90px;text-align:left;}
 }
 #printRoot .psHead{display:flex;justify-content:space-between;align-items:flex-end;
   font-size:11pt;margin-bottom:2mm;font-weight:700;}
-#printRoot .psHead .due{font-size:9pt;font-weight:400;}
 table.ps{border-collapse:collapse;width:100%;table-layout:fixed;}
 table.ps th,table.ps td{border:0.6px solid #555;text-align:center;padding:0;height:7.2mm;
   font-size:8pt;overflow:hidden;}
@@ -306,8 +305,6 @@ table.ps th.teamHd{font-size:10pt;}
       <input type="text" id="cfTeam" style="width:140px"></label>
     <label class="f"><span class="cap">サイクル基準日(いずれかのサイクル開始日曜日)</span>
       <input type="date" id="cfAnchor"></label>
-    <label class="f"><span class="cap">印刷ヘッダの注記(例: ※提出期限は5/25までにお願いします。)</span>
-      <input type="text" id="cfDue" style="width:100%"></label>
   </div>
 
   <div class="panel">
@@ -628,7 +625,7 @@ function buildCtx(start){
     areas: state.areas };
 }
 const isWork = c => c==="W8"||c==="W9"||c==="MD"||c==="TSU";
-const isOffAny = c => c==="OF"||c==="NEN"||c==="KEI"||c==="NAT"||c==="FUY";
+const isOffAny = c => c==="OF"||c==="HOL"||c==="NEN"||c==="KEI"||c==="NAT"||c==="FUY";
 
 /* ---------------- 二部マッチング (Hopcroft–Karp 簡易版) ---------------- */
 function maxMatching(adj, nRight){
@@ -925,7 +922,7 @@ function solve(start, opts){
       const cell = cyc.cells[st.id] && cyc.cells[st.id][ds];
       if(fixed){ row[d]=fixed.code; lock[d]=true; }
       else if(cell && cell.locked && cell.code){ row[d]=cell.code; lock[d]=true; }
-      else if(ctx.info[d].weekend && st.weekendOK===false){ row[d]="OF"; lock[d]=true; }
+      else if(ctx.info[d].weekend && st.weekendOK===false){ row[d]=ctx.info[d].hol?"HOL":"OF"; lock[d]=true; }
     }
     g.push(row); lockMask.push(lock);
   }
@@ -941,6 +938,20 @@ function solve(start, opts){
     if(st.sh9 && dem.h9>0) return "W9";
     return "W8";
   };
+  // 祝日の非出勤は週休・非番と別枠の「祝」として先に配置する
+  for(let d=0;d<28;d++){
+    if(!ctx.info[d].hol) continue;
+    let fixedWork=0;
+    const cand=[];
+    for(let s=0;s<n;s++){
+      if(isWork(g[s][d])) fixedWork++;
+      else if(g[s][d]===null) cand.push(s);
+    }
+    const required=ctx.dem[d].h8+ctx.dem[d].h9+ctx.dem[d].md;
+    const holCount=Math.max(0,cand.length-Math.max(0,required-fixedWork));
+    cand.sort(()=>rand()-0.5);
+    for(let i=0;i<holCount;i++) g[cand[i]][d]="HOL";
+  }
   // --- 初期解: 休み配置 ---
   const surplus = ctx.days.map((ds,d)=>{
     let avail=0;
@@ -981,7 +992,8 @@ function solve(start, opts){
   }
   // --- 初期解: シフト割当 ---
   for(let d=0;d<28;d++){
-    for(let s=0;s<n;s++){
+    const order=[...Array(n).keys()].sort(()=>rand()-0.5);
+    for(const s of order){
       if(g[s][d]===null) g[s][d]=pickShift(s,d);
     }
   }
@@ -1049,7 +1061,7 @@ function solve(start, opts){
       undo=()=>{ g[s][d]=c1; };
       g[s][d]=nc;
       touchedD=[d]; touchedS=[s];
-    } else {
+    } else if(kind<0.97) {
       // 2人の同日 勤務⇔休みスワップ
       const d=(rand()*28)|0;
       const offs=[], works=[];
@@ -1073,6 +1085,23 @@ function solve(start, opts){
       g[s1][d]=pickShift(s1,d); g[s1][d1]="OF";
       g[s2][d]="OF"; g[s2][d2]=pickShift(s2,d2);
       touchedD=[d,d1,d2]; touchedS=[s1,s2];
+    } else {
+      // 祝日の「祝」と出勤者を同日内で交換し、適性を満たす組合せを探索
+      const holidays=[];
+      for(let d=0;d<28;d++) if(ctx.info[d].hol) holidays.push(d);
+      if(!holidays.length) continue;
+      const d=holidays[(rand()*holidays.length)|0], hols=[], works=[];
+      for(let s=0;s<n;s++){
+        if(!movable(s,d)) continue;
+        if(g[s][d]==="HOL") hols.push(s);
+        else if(isWork(g[s][d])&&g[s][d]!=="TSU") works.push(s);
+      }
+      if(!hols.length||!works.length) continue;
+      const s1=hols[(rand()*hols.length)|0], s2=works[(rand()*works.length)|0];
+      const c1=g[s1][d], c2=g[s2][d];
+      undo=()=>{ g[s1][d]=c1; g[s2][d]=c2; };
+      g[s1][d]=c2; g[s2][d]="HOL";
+      touchedD=[d]; touchedS=[s1,s2];
     }
     const before=total;
     for(const d of new Set(touchedD)) reDay(d);
@@ -1114,7 +1143,7 @@ function applySolution(res){
       const cell=cellOf(cyc, st.id, ds, true);
       if(cell.locked) continue;
       if(fixed){ cell.code=fixed.code; continue; }
-      cell.code = ctx.info[d].weekend ? "OF" : "W8";
+      cell.code = ctx.info[d].hol ? "HOL" : (ctx.info[d].weekend ? "OF" : "W8");
     }
   }
   // 平日の区割当
@@ -1183,6 +1212,7 @@ function cellLabel(st, inf, cell, offMap){
   const codes=state.settings.codes[st.type==="reg"?"reg":"con"] || {w8:"",w9:"",mid:""};
   switch(code){
     case "OF": return {t: offMap[inf.ds]||"非", red:true};
+    case "HOL": return {t:"祝", red:true};
     case "NEN": return {t:"年", red:true};
     case "KEI": return {t:"計", red:true};
     case "NAT": return {t:"夏", red:true};
@@ -1409,7 +1439,7 @@ $("#warnBox").addEventListener("click", e=>{
 /* ---------------- セルパレット ---------------- */
 const PAL=[
   {code:"W8", t:"8時"},{code:"W9", t:"9時"},{code:"MD", t:"中勤"},
-  {code:"OF", t:"休", red:true},{code:"NEN", t:"年", red:true},{code:"KEI", t:"計", red:true},
+  {code:"OF", t:"休", red:true},{code:"HOL", t:"祝", red:true},{code:"NEN", t:"年", red:true},{code:"KEI", t:"計", red:true},
   {code:"NAT", t:"夏", red:true},{code:"FUY", t:"冬", red:true},{code:"TSU", t:"通"},
   {code:"", t:"消去"}
 ];
@@ -1650,10 +1680,10 @@ $("#btnClearCells").addEventListener("click",()=>{
 /* ================================================================
    UI: 事前入力
 ================================================================ */
-const PRE_LABEL={ "":"", OF:"休", KEI:"計", NEN:"年", NAT:"夏", FUY:"冬", TSU:"通" };
+const PRE_LABEL={ "":"", OF:"休", HOL:"祝", KEI:"計", NEN:"年", NAT:"夏", FUY:"冬", TSU:"通" };
 // ペイント方式のコードパレット([消去]は空文字コード=強制クリア)
 const PRE_PAINT=[
-  {code:"OF", t:"休"},{code:"KEI", t:"計"},{code:"NEN", t:"年"},
+  {code:"OF", t:"休"},{code:"HOL", t:"祝"},{code:"KEI", t:"計"},{code:"NEN", t:"年"},
   {code:"NAT", t:"夏"},{code:"FUY", t:"冬"},{code:"TSU", t:"通"},
   {code:"", t:"消去"}
 ];
@@ -1676,7 +1706,7 @@ function renderPre(){
     const inf=dayInfo(ds);
     const f=cyc.fixed[ui.preStaff] && cyc.fixed[ui.preStaff][ds];
     const code=f?f.code:"";
-    const red=["OF","KEI","NEN","NAT","FUY"].includes(code);
+    const red=["OF","HOL","KEI","NEN","NAT","FUY"].includes(code);
     html+=`<div class="dcell ${inf.hol?"holi":inf.weekend?"we":""}" data-ds="${ds}">
       <span class="dt">${mdLabel(ds)}${inf.hol?"祝":""}</span>
       <span class="mk ${red?"red":""}">${PRE_LABEL[code]||""}${code==="TSU"&&f.area?`<span style="font-size:9px;display:block;">${esc(areaName(f.area))}</span>`:""}</span>
@@ -1945,7 +1975,6 @@ function renderConf(){
   const S=state.settings;
   $("#cfTeam").value=S.team;
   $("#cfAnchor").value=S.anchor;
-  $("#cfDue").value=S.due||"";
   $("#cfSumFrom").value=S.summer.from; $("#cfSumTo").value=S.summer.to;
   $("#cfWinFrom").value=S.winter.from; $("#cfWinTo").value=S.winter.to;
   // 必要人数
@@ -2024,7 +2053,6 @@ $("#cfAnchor").addEventListener("change",()=>{
   if(dowOf(v)!==0){ toast("基準日は日曜日にしてください"); $("#cfAnchor").value=state.settings.anchor; return; }
   state.settings.anchor=v; ui.undoSnap=null; initCurCycle(); save(); renderSched();
 });
-$("#cfDue").addEventListener("change",()=>{ state.settings.due=$("#cfDue").value; save(); });
 ["#cfSumFrom","#cfSumTo","#cfWinFrom","#cfWinTo"].forEach(sel=>{
   $(sel).addEventListener("change",()=>{
     state.settings.summer={from:$("#cfSumFrom").value,to:$("#cfSumTo").value};
@@ -2131,7 +2159,6 @@ function loadDemo(){
   state.staff=staff;
   state.cycles={};
   state.settings.team="1-4班";
-  state.settings.due="※提出期限は前月25日までにお願いします。";
 }
 
 /* ================================================================
@@ -2144,7 +2171,6 @@ function buildPrint(){
   const cyc=ctx.cyc;
   const all=sortedStaff();
   let html=`<div class="psHead">
-    <span class="due">${esc(state.settings.due||"")}</span>
     <span>${jpLong(start)} 〜 ${jpLong(addDays(start,27))}</span>
   </div>`;
   html+='<table class="ps"><colgroup><col class="cName">'+ctx.days.map(()=>"<col>").join("")+"</colgroup>";
@@ -2274,9 +2300,8 @@ function exportXlsx(){
   const S_HDR=1,S_DARK=2,S_BLK=3,S_RED=4,S_BLKT=5,S_REDT=6,S_NAME=7,S_NAMET=8,S_TEAM=9;
   const rows=[];
   const cell=(r,c,text,s)=>`<c r="${colName(c)}${r}" s="${s}" t="inlineStr"><is><t xml:space="preserve">${xEsc(text)}</t></is></c>`;
-  // 行1: 注記+期間
+  // 行1: 期間
   let r1=`<row r="1" ht="16" customHeight="1">`;
-  r1+=cell(1,1,state.settings.due||"",0);
   r1+=cell(1,20,jpLong(start)+" 〜 "+jpLong(addDays(start,27)),0);
   rows.push(r1+"</row>");
   // 行2-3: ヘッダ
