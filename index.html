@@ -832,11 +832,11 @@ function staffEval(ctx, g, s){
       }
       prevMd = (code==="MD");
     }
-    if(offW===0){
-      cost+=HARD;
-      warns.push({lv:"hard", s, msg:`${st.name} 第${w+1}週に週休がありません`});
-    } else if(offW!==2){
-      cost += 60*Math.abs(offW-2);
+    // 日曜始まりの各週は、週休・非番(OF)を必ず1日ずつ、計2日付与する。
+    // 祝日休み(HOL)や年休は別枠であり、ここには数えない。
+    if(offW!==2){
+      cost+=Math.abs(offW-2)*HARD;
+      warns.push({lv:"hard", s, msg:`${st.name} 第${w+1}週の週休・非番が${offW}日です (必須: 2日)`});
     }
   }
   // 4週8休
