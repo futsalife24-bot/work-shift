@@ -803,7 +803,9 @@ function staffEval(ctx, g, s){
       const code=g[s][d];
       const inf=ctx.info[d];
       if(code==="OF") { offW++; offTotal++; }
-      if(inf.hol && code==="OF"){
+      if(inf.hol && code==="OF" && st.type!=="con"){
+        // 期間雇用は祝日に週休・非番(または年休)を置いて消化するのが実運用のため対象外。
+        // 正社員・内務は祝日非出勤=「祝」が原則。
         cost+=CRITICAL; marks[d]="hard";
         warns.push({lv:"hard", d, s, msg:`${st.name} ${mdLabel(inf.ds)} 祝日に週休・非番が入っています`});
       }
@@ -839,12 +841,15 @@ function staffEval(ctx, g, s){
       }
       prevMd = (code==="MD");
     }
-    // 日曜始まりの各週は、週休・非番(OF)を必ず1日ずつ、計2日付与する。
+    // 各週の週休・非番(OF)は1〜3日の範囲をハード制約とする(祝日が多い週は1日、その分
+    // 隣の週で3日にする、という実運用に合わせた幅)。2日を目標にソフト評価で寄せる。
     // 祝日休み(HOL)や年休は別枠であり、ここには数えない。
-    if(offW!==2){
-      cost+=Math.abs(offW-2)*HARD;
-      warns.push({lv:"hard", s, msg:`${st.name} 第${w+1}週の週休・非番が${offW}日です (必須: 2日)`});
+    if(offW<1 || offW>3){
+      const over = offW<1 ? (1-offW) : (offW-3);
+      cost += over*HARD;
+      warns.push({lv:"hard", s, msg:`${st.name} 第${w+1}週の週休・非番が${offW}日です (許容: 1〜3日)`});
     }
+    cost += Math.abs(offW-2)*60;
   }
   // 4週8休
   if(offTotal!==8){
@@ -956,15 +961,17 @@ function detectImpossible(ctx){
     }
   }
   for(let s=0;s<ctx.del.length;s++){
+    const stImp=ctx.del[s];
     for(let w=0;w<4;w++){
       let possible=0;
       for(let i=0;i<7;i++){
         const d=w*7+i;
-        if(ctx.info[d].hol) continue;
+        // 期間雇用は祝日にも週休・非番を置けるため、祝日を除外しない
+        if(ctx.info[d].hol && stImp.type!=="con") continue;
         const forced=forcedAt(s,d);
         if(forced===null || forced==="OF") possible++;
       }
-      if(possible<2) reasons.push(`${ctx.del[s].name} 第${w+1}週に週休・非番を2日置ける日がありません`);
+      if(possible<1) reasons.push(`${stImp.name} 第${w+1}週に週休・非番を置ける日がありません`);
     }
   }
   return [...new Set(reasons)];
@@ -1018,14 +1025,16 @@ function solve(start, opts){
     if(st.sh9 && dem.h9>0) return "W9";
     return "W8";
   };
-  // 祝日の非出勤は週休・非番と別枠の「祝」として先に配置する
+  // 祝日の非出勤は週休・非番と別枠の「祝」として先に配置する(正社員・内務のみ)。
+  // 期間雇用(con)は祝日に「祝」を使わず週休・非番/年休で消化する運用のため、
+  // ここでは先置きせず通常の配置対象(null)のまま残す。
   for(let d=0;d<28;d++){
     if(!ctx.info[d].hol) continue;
     let fixedWork=0;
     const cand=[];
     for(let s=0;s<n;s++){
       if(isWork(g[s][d])) fixedWork++;
-      else if(g[s][d]===null) cand.push(s);
+      else if(g[s][d]===null && ctx.del[s].type!=="con") cand.push(s);
     }
     const required=ctx.dem[d].h8+ctx.dem[d].h9+ctx.dem[d].md;
     const holCount=Math.max(0,cand.length-Math.max(0,required-fixedWork));
@@ -1048,22 +1057,41 @@ function solve(start, opts){
     return avail-(dem.h8+dem.h9+dem.md);
   });
   for(let s=0;s<n;s++){
+    const stInit=ctx.del[s];
+    // 期間雇用(con)は祝日にも週休・非番を置ける。正社員・内務は祝日を候補から除く。
+    const conHolOK = stInit.type==="con";
     let offCnt=0;
     for(let d=0;d<28;d++) if(g[s][d]==="OF") offCnt++;
     let need = Math.max(0, 8-offCnt);
+    // 1巡目: 置ける日がある週すべてに、まず1日ずつ確保する
+    const weekOff=[0,0,0,0];
     for(let w=0; w<4 && need>0; w++){
-      let offW=0;
-      for(let i=0;i<7;i++) if(g[s][w*7+i]==="OF") offW++;
-      let put = Math.min(need, Math.max(0,2-offW));
       const cand=[];
-      for(let i=0;i<7;i++){ const d=w*7+i; if(g[s][d]===null && !ctx.info[d].hol) cand.push(d); }
+      for(let i=0;i<7;i++){ const d=w*7+i; if(g[s][d]===null && (conHolOK || !ctx.info[d].hol)) cand.push(d); }
+      if(!cand.length) continue;
       cand.sort((a,b)=> (surplus[b]-surplus[a]) || (rand()-0.5));
-      for(let k=0;k<put && k<cand.length;k++){ g[s][cand[k]]="OF"; surplus[cand[k]]--; need--; }
+      g[s][cand[0]]="OF"; surplus[cand[0]]--; need--; weekOff[w]++;
     }
-    // 端数はどこでも
+    // 2巡目以降: 週3日までの範囲で、置ける枠に余裕がある週へ2日目・3日目を配分する
+    while(need>0){
+      let placed=false;
+      const weekOrder=[0,1,2,3].sort(()=>rand()-0.5);
+      for(const w of weekOrder){
+        if(need<=0) break;
+        if(weekOff[w]>=3) continue;
+        const cand=[];
+        for(let i=0;i<7;i++){ const d=w*7+i; if(g[s][d]===null && (conHolOK || !ctx.info[d].hol)) cand.push(d); }
+        if(!cand.length) continue;
+        cand.sort((a,b)=> (surplus[b]-surplus[a]) || (rand()-0.5));
+        g[s][cand[0]]="OF"; surplus[cand[0]]--; need--; weekOff[w]++;
+        placed=true;
+      }
+      if(!placed) break;
+    }
+    // 端数(週3日の枠でも足りない分)はどこでも置く
     while(need>0){
       const cand=[];
-      for(let d=0;d<28;d++) if(g[s][d]===null && !ctx.info[d].hol) cand.push(d);
+      for(let d=0;d<28;d++) if(g[s][d]===null && (conHolOK || !ctx.info[d].hol)) cand.push(d);
       if(!cand.length) break;
       cand.sort((a,b)=>surplus[b]-surplus[a]);
       g[s][cand[0]]="OF"; surplus[cand[0]]--; need--;
@@ -1119,9 +1147,10 @@ function solve(start, opts){
       if(!offs.length||!works.length) continue;
       const d1=offs[(rand()*offs.length)|0], d2=works[(rand()*works.length)|0];
       const c1=g[s][d1], c2=g[s][d2];
-      // 週休・非番の各週2日を維持するため、休みと勤務の交換は同じ週内だけ
+      // 週休・非番のバランス(週1〜3日)を保つため、休みと勤務の交換は同じ週内だけ
       if(c1==="OF" && Math.floor(d1/7)!==Math.floor(d2/7)) continue;
-      if(c1==="OF" && ctx.info[d2].hol) continue;
+      // 正社員・内務は祝日にOFを置けない(期間雇用は可)
+      if(c1==="OF" && ctx.info[d2].hol && ctx.del[s].type!=="con") continue;
       undo=()=>{ g[s][d1]=c1; g[s][d2]=c2; };
       g[s][d2]=c1; g[s][d1]=pickShift(s,d1);
       touchedD=[d1,d2]; touchedS=[s];
@@ -1163,10 +1192,14 @@ function solve(start, opts){
       }
       if(!offs.length||!works.length) continue;
       const s1=offs[(rand()*offs.length)|0], s2=works[(rand()*works.length)|0];
+      // 正社員・内務は祝日にOFを置けないため、祝日への割当先(s2)は期間雇用に限る
+      if(ctx.info[d].hol && ctx.del[s2].type!=="con") continue;
       // s1 の別の勤務日を休みに、s2 の別の休み日を勤務に(休み数維持)
+      // s1 が正社員・内務なら、新たにOFを置く日(d1)は祝日を除く
+      const s1ConHolOK = ctx.del[s1].type==="con";
       const w1=[], o2=[];
       for(let dd=0;dd<28;dd++){
-        if(dd!==d && movable(s1,dd) && isWork(g[s1][dd])) w1.push(dd);
+        if(dd!==d && movable(s1,dd) && isWork(g[s1][dd]) && (s1ConHolOK || !ctx.info[dd].hol)) w1.push(dd);
         if(dd!==d && movable(s2,dd) && g[s2][dd]==="OF") o2.push(dd);
       }
       if(!w1.length||!o2.length) continue;
