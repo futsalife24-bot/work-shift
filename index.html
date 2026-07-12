@@ -803,6 +803,10 @@ function staffEval(ctx, g, s){
       const code=g[s][d];
       const inf=ctx.info[d];
       if(code==="OF") { offW++; offTotal++; }
+      if(inf.hol && code==="OF"){
+        cost+=CRITICAL; marks[d]="hard";
+        warns.push({lv:"hard", d, s, msg:`${st.name} ${mdLabel(inf.ds)} 祝日に週休・非番が入っています`});
+      }
       // 適性・土日可否
       if(isWork(code)){
         if(inf.weekend && st.weekendOK===false){
@@ -898,6 +902,74 @@ function evaluate(ctx, g){
   return {total, warns, cellMarks, dayData, fair:f};
 }
 
+// 登録済みの適性・固定入力だけで、日別条件が物理的に成立するかを判定する。
+// ソルバーの探索失敗と、候補不足による解消不能を区別するために使う。
+function detectImpossible(ctx){
+  const reasons=[];
+  const forcedAt=(s,d)=>{
+    const st=ctx.del[s], ds=ctx.days[d];
+    const fixed=ctx.cyc.fixed[st.id] && ctx.cyc.fixed[st.id][ds];
+    if(fixed) return fixed.code||"";
+    const cell=ctx.cyc.cells[st.id] && ctx.cyc.cells[st.id][ds];
+    if(cell && cell.locked) return cell.code||"";
+    if(ctx.info[d].weekend && st.weekendOK===false) return ctx.info[d].hol?"HOL":"OF";
+    return null;
+  };
+  const canRole=(s,d,role)=>{
+    const st=ctx.del[s], forced=forcedAt(s,d);
+    if(forced!==null){
+      if(!isWork(forced) || forced==="TSU") return false;
+      return forced===role;
+    }
+    if(ctx.info[d].weekend && st.weekendOK===false) return false;
+    if(role==="W8") return !!st.sh8;
+    if(role==="W9") return !!st.sh9 && ctx.dem[d].h9>0;
+    return role==="MD" && !!st.smd;
+  };
+  for(let d=0;d<28;d++){
+    const dem=ctx.dem[d], slots=[];
+    for(let i=0;i<dem.h8;i++) slots.push("W8");
+    for(let i=0;i<dem.h9;i++) slots.push("W9");
+    for(let i=0;i<dem.md;i++) slots.push("MD");
+    const adj=slots.map(role=>ctx.del.map((_,s)=>canRole(s,d,role)?s:-1).filter(s=>s>=0));
+    if(maxMatching(adj,ctx.del.length).size<slots.length){
+      reasons.push(`${mdLabel(ctx.days[d])} 必要人数を満たせる勤務適性者が足りません`);
+    }
+    const inf=ctx.info[d];
+    const target=ctx.areas.filter(a=>!a.mon || inf.afterBreak).filter(a=>!inf.weekend || !a.sat8 || inf.dtype==="sat");
+    const missing=target.filter(a=>!ctx.del.some((st,s)=>{
+      if(!(inf.weekend?(st.areasH||[]):(st.areasW||[])).includes(a.id)) return false;
+      if(inf.weekend){
+        if(a.sat8) return canRole(s,d,"W8");
+        return canRole(s,d,"W8")||canRole(s,d,"W9")||canRole(s,d,"MD");
+      }
+      return canRole(s,d,"W8") || (a.midOK && canRole(s,d,"MD"));
+    }));
+    if(missing.length) reasons.push(`${mdLabel(ctx.days[d])} 担当可能者がいない区: ${missing.map(a=>a.name).join("・")}`);
+    if(!inf.weekend && dem.md>=2){
+      const nightAdj=["sea","mountain"].map(side=>ctx.del.map((st,s)=>
+        canRole(s,d,"MD") && (st.nightAreas||[]).includes(side)?s:-1).filter(s=>s>=0));
+      if(maxMatching(nightAdj,ctx.del.length).size<2) reasons.push(`${mdLabel(ctx.days[d])} 夜間配達の海側・山側を別々の中勤者へ割り当てられません`);
+    } else if(inf.weekend && dem.md>0){
+      const both=ctx.del.some((st,s)=>canRole(s,d,"MD") && (st.nightAreas||[]).includes("sea") && (st.nightAreas||[]).includes("mountain"));
+      if(!both) reasons.push(`${mdLabel(ctx.days[d])} 海側・山側の両方を担当できる中勤者がいません`);
+    }
+  }
+  for(let s=0;s<ctx.del.length;s++){
+    for(let w=0;w<4;w++){
+      let possible=0;
+      for(let i=0;i<7;i++){
+        const d=w*7+i;
+        if(ctx.info[d].hol) continue;
+        const forced=forcedAt(s,d);
+        if(forced===null || forced==="OF") possible++;
+      }
+      if(possible<2) reasons.push(`${ctx.del[s].name} 第${w+1}週に週休・非番を2日置ける日がありません`);
+    }
+  }
+  return [...new Set(reasons)];
+}
+
 /* ---------------- グリッド構築(cells → g) ---------------- */
 function gridFromCells(ctx){
   return ctx.del.map(st=>{
@@ -984,14 +1056,14 @@ function solve(start, opts){
       for(let i=0;i<7;i++) if(g[s][w*7+i]==="OF") offW++;
       let put = Math.min(need, Math.max(0,2-offW));
       const cand=[];
-      for(let i=0;i<7;i++){ const d=w*7+i; if(g[s][d]===null) cand.push(d); }
+      for(let i=0;i<7;i++){ const d=w*7+i; if(g[s][d]===null && !ctx.info[d].hol) cand.push(d); }
       cand.sort((a,b)=> (surplus[b]-surplus[a]) || (rand()-0.5));
       for(let k=0;k<put && k<cand.length;k++){ g[s][cand[k]]="OF"; surplus[cand[k]]--; need--; }
     }
     // 端数はどこでも
     while(need>0){
       const cand=[];
-      for(let d=0;d<28;d++) if(g[s][d]===null) cand.push(d);
+      for(let d=0;d<28;d++) if(g[s][d]===null && !ctx.info[d].hol) cand.push(d);
       if(!cand.length) break;
       cand.sort((a,b)=>surplus[b]-surplus[a]);
       g[s][cand[0]]="OF"; surplus[cand[0]]--; need--;
@@ -1049,6 +1121,7 @@ function solve(start, opts){
       const c1=g[s][d1], c2=g[s][d2];
       // 週休・非番の各週2日を維持するため、休みと勤務の交換は同じ週内だけ
       if(c1==="OF" && Math.floor(d1/7)!==Math.floor(d2/7)) continue;
+      if(c1==="OF" && ctx.info[d2].hol) continue;
       undo=()=>{ g[s][d1]=c1; g[s][d2]=c2; };
       g[s][d2]=c1; g[s][d1]=pickShift(s,d1);
       touchedD=[d1,d2]; touchedS=[s];
@@ -1674,10 +1747,34 @@ function runSolve(){
   $("#solveMsg").textContent="生成中…(数秒かかります)";
   setTimeout(()=>{
     try{
-      const res=solve(ui.curStart,{iter:60000});
+      let res=solve(ui.curStart,{iter:60000});
       if(res){
+        let ev=evaluate(res.ctx,res.g);
+        let hard=ev.warns.filter(w=>w.lv==="hard");
+        let impossible=detectImpossible(res.ctx);
+        // 条件上は成立可能なのに赤警告が残った場合、自動でもう1案探索して良い方を採用
+        if(hard.length && !impossible.length){
+          const alt=solve(ui.curStart,{iter:60000});
+          if(alt){
+            const altEv=evaluate(alt.ctx,alt.g);
+            const altHard=altEv.warns.filter(w=>w.lv==="hard");
+            if(altHard.length<hard.length || (altHard.length===hard.length && altEv.total<ev.total)){
+              res=alt; ev=altEv; hard=altHard;
+            }
+          }
+        }
         applySolution(res);
-        toast("生成しました", {actionLabel:"元に戻す", onAction:undoLastGen});
+        if(hard.length){
+          impossible=detectImpossible(res.ctx);
+          const title=impossible.length?"条件上、解消できない可能性があります":"赤い警告が残りました";
+          const detail=impossible.length
+            ? `<p class="note">登録済みの適性・固定入力・担当区を照合した結果、次の条件は候補不足です。</p><ul>${impossible.slice(0,12).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`
+            : `<p class="note">条件上は成立可能ですが、今回の探索では${hard.length}件の赤警告を解消できませんでした。「別案」で改善する可能性があります。</p>`;
+          openModal(`<h2>${title}</h2>${detail}<div class="row" style="margin-top:14px;"><button class="btn primary" id="solveResultClose">確認</button></div>`);
+          $("#solveResultClose").onclick=closeModal;
+        } else{
+          toast("生成しました", {actionLabel:"元に戻す", onAction:undoLastGen});
+        }
       }
     }catch(e){ console.error(e); toast("生成エラー: "+e.message); }
     $("#solveOverlay").classList.remove("open");
