@@ -700,8 +700,9 @@ function dayEval(ctx, g, d){
     const covered = new Set(m.pairR.map((u,i)=>u>=0?i:-1).filter(i=>i>=0));
     const unc = areaList.filter((a,i)=>!covered.has(i));
     if(unc.length){
-      cost += unc.length*450;
-      warns.push({lv:"soft", d, msg:`${mdLabel(inf.ds)} 欠区: ${unc.map(a=>a.name).join("・")}`});
+      // 欠区は欠員と同じ最優先条件。人員・適性が足りない場合だけ警告として残る。
+      cost += unc.length*HARD;
+      warns.push({lv:"hard", d, msg:`${mdLabel(inf.ds)} 欠区: ${unc.map(a=>a.name).join("・")}`});
       uncovered = unc.map(a=>a.name);
     }
     matchInfo={pool, areaList, m};
@@ -747,8 +748,8 @@ function dayEval(ctx, g, d){
     };
     const balancedOK=workers.length>0 && cover(0);
     if(!balancedOK){
-      cost += 450;
-      warns.push({lv:"soft", d, msg:`${mdLabel(inf.ds)} 全区を各人3〜4区で分担できません`});
+      cost += HARD;
+      warns.push({lv:"hard", d, msg:`${mdLabel(inf.ds)} 全区を各人3〜4区で分担できません`});
       uncovered=tgt.filter((a,i)=>elig[i].length===0).map(a=>a.name);
     }
     // 8時限定区(sat8): 5人体制の日(dtype==="sat"=土曜・単発祝日)のみ、8時勤務者の中でのカバー判定。3人体制の日(dtype==="sun")はカバー要件から完全除外。
@@ -761,9 +762,9 @@ function dayEval(ctx, g, d){
         }
         const unc8 = sat8Areas.filter(a=>!covered8.has(a.id));
         if(unc8.length){
-          cost += unc8.length*450;
+          cost += unc8.length*HARD;
           for(const a of unc8){
-            warns.push({lv:"soft", d, msg:`${mdLabel(inf.ds)} ${a.name}(8時限定)を配達できる8時勤務者がいません`});
+            warns.push({lv:"hard", d, msg:`${mdLabel(inf.ds)} ${a.name}(8時限定)を配達できる8時勤務者がいません`});
           }
           uncovered = uncovered.concat(unc8.map(a=>a.name));
         }
@@ -954,7 +955,15 @@ function solve(start, opts){
     }
     const required=ctx.dem[d].h8+ctx.dem[d].h9+ctx.dem[d].md;
     const holCount=Math.max(0,cand.length-Math.max(0,required-fixedWork));
-    cand.sort(()=>rand()-0.5);
+    // 祝を付ける人は、当日の必要シフトを埋められる適性が低い人から優先。
+    // 中勤・9時適性者を先に休ませると、祝日の日別人数が欠けやすいため。
+    const needScore=s=>{
+      const st=ctx.del[s];
+      return (ctx.dem[d].md>0 && st.smd?100:0) +
+        (ctx.dem[d].h9>0 && st.sh9?50:0) +
+        (ctx.dem[d].h8>0 && st.sh8?10:0);
+    };
+    cand.sort((a,b)=>needScore(a)-needScore(b) || rand()-0.5);
     for(let i=0;i<holCount;i++) g[cand[i]][d]="HOL";
   }
   // --- 初期解: 休み配置 ---
