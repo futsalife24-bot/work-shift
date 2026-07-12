@@ -386,6 +386,8 @@ const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const LS_KEY = "kinmuhyo_v1";
 const HARD = 10000;
+// 赤い警告(欠員・欠区)は、週休バランス等より最優先で解消する
+const CRITICAL = HARD * 100;
 const DOW = ["日","月","火","水","木","金","土"];
 
 function pad2(n){ return String(n).padStart(2,"0"); }
@@ -668,7 +670,7 @@ function dayEval(ctx, g, d){
   }
   let cost=0; const warns=[]; let uncovered=[];
   const short8=Math.max(0,dem.h8-c8), short9=Math.max(0,dem.h9-c9), shortM=Math.max(0,dem.md-cm);
-  cost += (short8+short9+shortM)*HARD;
+  cost += (short8+short9+shortM)*CRITICAL;
   if(short8) warns.push({lv:"hard", d, msg:`${mdLabel(inf.ds)} 8時が${short8}人不足 (${c8}/${dem.h8})`});
   if(short9) warns.push({lv:"hard", d, msg:`${mdLabel(inf.ds)} 9時が${short9}人不足 (${c9}/${dem.h9})`});
   if(shortM) warns.push({lv:"hard", d, msg:`${mdLabel(inf.ds)} 中勤が${shortM}人不足 (${cm}/${dem.md})`});
@@ -701,7 +703,7 @@ function dayEval(ctx, g, d){
     const unc = areaList.filter((a,i)=>!covered.has(i));
     if(unc.length){
       // 欠区は欠員と同じ最優先条件。人員・適性が足りない場合だけ警告として残る。
-      cost += unc.length*HARD;
+      cost += unc.length*CRITICAL;
       warns.push({lv:"hard", d, msg:`${mdLabel(inf.ds)} 欠区: ${unc.map(a=>a.name).join("・")}`});
       uncovered = unc.map(a=>a.name);
     }
@@ -748,7 +750,7 @@ function dayEval(ctx, g, d){
     };
     const balancedOK=workers.length>0 && cover(0);
     if(!balancedOK){
-      cost += HARD;
+      cost += CRITICAL;
       warns.push({lv:"hard", d, msg:`${mdLabel(inf.ds)} 全区を各人3〜4区で分担できません`});
       uncovered=tgt.filter((a,i)=>elig[i].length===0).map(a=>a.name);
     }
@@ -762,7 +764,7 @@ function dayEval(ctx, g, d){
         }
         const unc8 = sat8Areas.filter(a=>!covered8.has(a.id));
         if(unc8.length){
-          cost += unc8.length*HARD;
+          cost += unc8.length*CRITICAL;
           for(const a of unc8){
             warns.push({lv:"hard", d, msg:`${mdLabel(inf.ds)} ${a.name}(8時限定)を配達できる8時勤務者がいません`});
           }
