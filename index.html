@@ -203,7 +203,10 @@ table.ps col.cName{width:26mm;}
 table.ps th.dt{font-size:7pt;height:5mm;}
 table.ps th.dw{font-size:7pt;height:4.5mm;}
 table.ps th.dark{background:#222 !important;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-table.ps td.nm{text-align:left;padding-left:1.5mm;font-size:8pt;border-right:1.2px solid #222;}
+/* 班名・氏名列と勤務内容の間(縦)、日付ヘッダと勤務内容の間(横)は二重線 */
+table.ps td.nm{text-align:left;padding-left:1.5mm;font-size:8pt;border-right:3px double #000;}
+table.ps th.teamHd{border-right:3px double #000;border-bottom:3px double #000;}
+table.ps th.dw{border-bottom:3px double #000;}
 table.ps .red{color:#d00;}
 table.ps .area{display:block;font-size:5.5pt;color:#555;line-height:1;}
 /* 社員区分(正社員/期間雇用/内務)の境界は太線でしっかり区切る */
