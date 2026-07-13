@@ -203,10 +203,13 @@ table.ps col.cName{width:26mm;}
 table.ps th.dt{font-size:7pt;height:5mm;}
 table.ps th.dw{font-size:7pt;height:4.5mm;}
 table.ps th.dark{background:#222 !important;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-/* 班名・氏名列と勤務内容の間(縦)、日付ヘッダと勤務内容の間(横)は二重線 */
-table.ps td.nm{text-align:left;padding-left:1.5mm;font-size:8pt;border-right:3px double #000;}
-table.ps th.teamHd{border-right:3px double #000;border-bottom:3px double #000;}
-table.ps th.dw{border-bottom:3px double #000;}
+table.ps td.nm{text-align:left;padding-left:1.5mm;font-size:8pt;}
+/* 班名・氏名列と勤務内容の間(縦)、日付ヘッダと勤務内容の間(横)は二重線。
+   doubleボーダーは印刷時に潰れて太線に見えるため、実線+0.5mm空けた平行線で描く */
+table.ps td.nm,table.ps th.teamHd{position:relative;border-right:1px solid #000;}
+table.ps td.nm::after,table.ps th.teamHd::after{content:"";position:absolute;top:0;bottom:0;right:0.5mm;width:0.3mm;background:#000;}
+table.ps tr.fRow td{position:relative;border-top:1px solid #000;}
+table.ps tr.fRow td::before{content:"";position:absolute;left:0;right:0;top:0.5mm;height:0.3mm;background:#000;}
 table.ps .red{color:#d00;}
 table.ps .area{display:block;font-size:5.5pt;color:#555;line-height:1;}
 /* 社員区分(正社員/期間雇用/内務)の境界は太線でしっかり区切る */
@@ -2472,11 +2475,12 @@ function buildPrint(){
   ctx.info.forEach(inf=>{ html+=`<th class="dw ${inf.weekend?"dark":""}">${DOW[inf.dow]}${inf.hol?"祝":""}</th>`; });
   html+="</tr>";
   let prevType=null;
-  all.forEach(st=>{
+  all.forEach((st,si)=>{
     const gTop=prevType!==null && st.type!==prevType;
     prevType=st.type;
     const offMap=weeklyOffLabels(ctx,st.id);
-    html+=`<tr class="${gTop?"gTop":""}"><td class="nm">${esc(st.name)}</td>`;
+    // fRow=先頭社員行(日付ヘッダとの間の二重線をこの行の上辺に描く)
+    html+=`<tr class="${gTop?"gTop":""}${si===0?" fRow":""}"><td class="nm">${esc(st.name)}</td>`;
     ctx.info.forEach(inf=>{
       const cell=cyc.cells[st.id]&&cyc.cells[st.id][inf.ds];
       const lab=cellLabel(st,inf,cell,offMap);
