@@ -375,7 +375,7 @@ table.ps th.teamHd{font-size:10pt;}
 
 /* ---------------- ユーティリティ ---------------- */
 const $ = s => document.querySelector(s);
-const $ = s => Array.from(document.querySelectorAll(s));
+const $$ = s => Array.from(document.querySelectorAll(s));
 const LS_KEY = "kinmuhyo_v1";
 const HARD = 10000;
 // 赤い警告(欠員・欠区)は、週休バランス等より最優先で解消する
@@ -1350,8 +1350,8 @@ function areaName(id){ const a=state.areas.find(x=>x.id===id); return a?a.name:"
    UI: タブ
 ================================================================ */
 function switchTab(page){
-  $("#tabs button").forEach(x=>x.classList.toggle("active", x.dataset.page===page));
-  $(".page").forEach(p=>p.classList.remove("active"));
+  $$("#tabs button").forEach(x=>x.classList.toggle("active", x.dataset.page===page));
+  $$(".page").forEach(p=>p.classList.remove("active"));
   $("#page-"+page).classList.add("active");
   closePalette();
   if(page==="pre") renderPre();
@@ -1359,7 +1359,7 @@ function switchTab(page){
   if(page==="conf") renderConf();
   if(page==="sched") renderSched();
 }
-$("#tabs button").forEach(b=>{
+$$("#tabs button").forEach(b=>{
   b.addEventListener("click",()=>switchTab(b.dataset.page));
 });
 
@@ -1515,13 +1515,13 @@ function renderSched(){
   html+="</tbody></table>";
   $("#gridWrap").innerHTML=html;
 
-  $("#gridWrap td.cell").forEach(td=>{
+  $$("#gridWrap td.cell").forEach(td=>{
     td.addEventListener("click",()=>{
       if(ui.fit){ exitFitAndFocus(td); return; }
       selectCell(td.dataset.sid, td.dataset.ds);
     });
   });
-  $("#gridWrap td.demCell").forEach(td=>{
+  $$("#gridWrap td.demCell").forEach(td=>{
     td.addEventListener("click",()=>{
       if(ui.fit){ exitFitAndFocus(td); return; }
       openOverride(td.dataset.ds);
@@ -2002,13 +2002,13 @@ function renderPre(){
   });
   html+="</div>";
   $("#preCal").innerHTML=segHtml+html;
-  $("#preSeg .chk").forEach(b=>{
+  $$("#preSeg .chk").forEach(b=>{
     b.addEventListener("click",()=>{
       ui.preCode=b.dataset.code;
       renderPre();
     });
   });
-  $("#preCal .dcell").forEach(dc=>{
+  $$("#preCal .dcell").forEach(dc=>{
     dc.addEventListener("click",()=>{
       const ds=dc.dataset.ds;
       const code=ui.preCode;
@@ -2099,7 +2099,7 @@ function renderQuota(){
         <td><input type="number" min="0" max="10" data-sid="${s.id}" value="${cyc.quota[s.id]||0}"></td></tr>`;
     });
     $("#quotaTable").innerHTML=html;
-    $("#quotaTable input").forEach(inp=>{
+    $$("#quotaTable input").forEach(inp=>{
       inp.addEventListener("change",()=>{
         cyc.quota[inp.dataset.sid]=Math.max(0,Number(inp.value)||0);
         save();
@@ -2141,7 +2141,7 @@ function renderStaffList(){
       <span class="note">↕</span>
     </div>`;
   }).join("");
-  $("#staffList .staffCard").forEach(c=>{
+  $$("#staffList .staffCard").forEach(c=>{
     c.addEventListener("click",()=>editStaff(c.dataset.id));
   });
 }
@@ -2195,7 +2195,7 @@ function editStaff(id){
   `);
   const tgl=el=>el.addEventListener("click",()=>el.classList.toggle("on"));
   ["#stH8"].forEach(s=>{ const el=$(s); if(el)tgl(el); });
-  $("#stNight .chk").forEach(tgl);
+  $$("#stNight .chk").forEach(tgl);
   const syncNightAreas=()=>{
     const on=$("#stLate").classList.contains("on");
     $("#stNightWrap").style.display=on?"":"none";
@@ -2207,8 +2207,8 @@ function editStaff(id){
   const syncWeekendAreas=()=>{
     const wkOn=$("#stWk").classList.contains("on");
     $("#stWeekendAreas").style.display=wkOn?"":"none";
-    const weekday=new Set($("#stAw .chk.on").map(c=>c.dataset.aid));
-    $("#stAh .chk").forEach(c=>{
+    const weekday=new Set($$("#stAw .chk.on").map(c=>c.dataset.aid));
+    $$("#stAh .chk").forEach(c=>{
       const locked=wkOn && weekday.has(c.dataset.aid);
       if(locked) c.classList.add("on");
       c.classList.toggle("locked",locked);
@@ -2218,11 +2218,11 @@ function editStaff(id){
     $("#stWk").classList.toggle("on");
     syncWeekendAreas();
   });
-  $("#stAw .chk").forEach(c=>c.addEventListener("click",()=>{
+  $$("#stAw .chk").forEach(c=>c.addEventListener("click",()=>{
     c.classList.toggle("on");
     syncWeekendAreas();
   }));
-  $("#stAh .chk").forEach(c=>c.addEventListener("click",()=>{
+  $$("#stAh .chk").forEach(c=>c.addEventListener("click",()=>{
     if(!c.classList.contains("locked")) c.classList.toggle("on");
   }));
   syncWeekendAreas();
@@ -2239,9 +2239,9 @@ function editStaff(id){
     const lateOK=$("#stLate")?.classList.contains("on");
     st.sh9=lateOK;
     st.smd=lateOK;
-    st.areasW=$("#stAw .chk.on").map(c=>c.dataset.aid);
-    st.areasH=st.weekendOK ? $("#stAh .chk.on").map(c=>c.dataset.aid) : [];
-    st.nightAreas=lateOK ? $("#stNight .chk.on").map(c=>c.dataset.night) : [];
+    st.areasW=$$("#stAw .chk.on").map(c=>c.dataset.aid);
+    st.areasH=st.weekendOK ? $$("#stAh .chk.on").map(c=>c.dataset.aid) : [];
+    st.nightAreas=lateOK ? $$("#stNight .chk.on").map(c=>c.dataset.night) : [];
     st.keiZan=Number($("#stKei").value)||0;
     st.nenZan=Number($("#stNen").value)||0;
     if(isNew) state.staff.push(st);
@@ -2282,7 +2282,7 @@ function renderConf(){
       <td><input type="number" id="dSu8" value="${D.sun.h8}"></td><td>-</td>
       <td><input type="number" id="dSu9" value="${D.sun.h9}"></td>
       <td><input type="number" id="dSuM" value="${D.sun.md}"></td></tr>`;
-  $("#demandTable input").forEach(inp=>inp.addEventListener("change",()=>{
+  $$("#demandTable input").forEach(inp=>inp.addEventListener("change",()=>{
     D.wd.h8=+$("#dWd8").value; D.monTarget=+$("#dMonT").value; D.wd.h9=+$("#dWd9").value; D.wd.md=+$("#dWdM").value;
     D.sat.h8=+$("#dSa8").value; D.sat.h9=+$("#dSa9").value; D.sat.md=+$("#dSaM").value;
     D.sun.h8=+$("#dSu8").value; D.sun.h9=+$("#dSu9").value; D.sun.md=+$("#dSuM").value;
@@ -2302,7 +2302,7 @@ function renderConf(){
       <td><input class="wide" id="cC8" value="${esc(C.con.w8)}"></td>
       <td><input class="wide" id="cC9" value="${esc(C.con.w9)}"></td>
       <td><input class="wide" id="cCM" value="${esc(C.con.mid)}"></td></tr>`;
-  $("#codeTable input").forEach(inp=>inp.addEventListener("change",()=>{
+  $$("#codeTable input").forEach(inp=>inp.addEventListener("change",()=>{
     C.reg.w8=$("#cR8").value.trim(); C.reg.w9=$("#cR9").value.trim(); C.reg.mid=$("#cRM").value.trim();
     C.con.w8=$("#cC8").value.trim(); C.con.w9=$("#cC9").value.trim(); C.con.mid=$("#cCM").value.trim();
     save();
@@ -2316,7 +2316,7 @@ function renderAreaTable(){
       <td><input type="checkbox" data-i="${i}" data-k="mon" ${a.mon?"checked":""}></td>
       <td><input type="checkbox" data-i="${i}" data-k="sat8" ${a.sat8?"checked":""}></td>
       <td><button class="btn small danger" data-i="${i}" data-k="del">✕</button></td></tr>`).join("");
-  $("#areaTable [data-k]").forEach(el=>{
+  $$("#areaTable [data-k]").forEach(el=>{
     const i=+el.dataset.i, k=el.dataset.k;
     if(k==="del") el.addEventListener("click",()=>{
       if(!confirm(state.areas[i].name+" を削除しますか?")) return;
