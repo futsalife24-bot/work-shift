@@ -205,11 +205,14 @@ table.ps th.dw{font-size:7pt;height:4.5mm;}
 table.ps th.dark{background:#222 !important;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 table.ps td.nm{text-align:left;padding-left:1.5mm;font-size:8pt;}
 /* 班名・氏名列と勤務内容の間(縦)、日付ヘッダと勤務内容の間(横)は二重線。
-   doubleボーダーは印刷時に潰れて太線に見えるため、実線+0.5mm空けた平行線で描く */
+   doubleボーダーは印刷時に潰れて太線に見える。内側の平行線は背景色だと
+   印刷パイプラインで消されるため、必ず出力されるボーダーで描く */
 table.ps td.nm,table.ps th.teamHd{position:relative;border-right:1px solid #000;}
-table.ps td.nm::after,table.ps th.teamHd::after{content:"";position:absolute;top:0;bottom:0;right:0.5mm;width:0.3mm;background:#000;}
+table.ps td.nm::after,table.ps th.teamHd::after{content:"";position:absolute;top:0;bottom:0;right:0.7mm;width:0;
+  border-left:0.3mm solid #000;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 table.ps tr.fRow td{position:relative;border-top:1px solid #000;}
-table.ps tr.fRow td::before{content:"";position:absolute;left:0;right:0;top:0.5mm;height:0.3mm;background:#000;}
+table.ps tr.fRow td::before{content:"";position:absolute;left:0;right:0;top:0.7mm;height:0;
+  border-top:0.3mm solid #000;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 table.ps .red{color:#d00;}
 table.ps .area{display:block;font-size:5.5pt;color:#555;line-height:1;}
 /* 社員区分(正社員/期間雇用/内務)の境界は太線でしっかり区切る */
