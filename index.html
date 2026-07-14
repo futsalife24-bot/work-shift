@@ -218,6 +218,16 @@ table.ps .area{display:block;font-size:5.5pt;color:#555;line-height:1;}
 /* 社員区分(正社員/期間雇用/内務)の境界は太線でしっかり区切る */
 table.ps tr.gTop td,table.ps tr.gTop th{border-top:2.6px solid #000;}
 table.ps th.teamHd{font-size:10pt;}
+/* チェック用印刷: 人数行(8時/9時/中勤/過不足)と警告一覧 */
+table.ps tr.chkRow td{height:4.4mm;font-size:6.5pt;color:#222;}
+table.ps tr.chkRow td.ng{color:#d00;font-weight:700;}
+table.ps tr.chkRow td.ov{color:#1d4ed8;font-weight:700;}
+#printRoot .chkLabel{color:#d00;}
+#printRoot .chkWarns{margin-top:2.5mm;font-size:8pt;line-height:1.55;column-count:2;column-gap:6mm;}
+#printRoot .chkWarns b{display:block;margin-bottom:1mm;column-span:all;}
+#printRoot .chkWarns .h{color:#b91c1c;}
+#printRoot .chkWarns .s{color:#92400e;}
+#printRoot .chkWarns .i{color:#1e50a0;}
 </style>
 </head>
 <body>
@@ -246,6 +256,7 @@ table.ps th.teamHd{font-size:10pt;}
       <span class="spacer" style="flex:1"></span>
       <button class="btn small" id="btnXlsx">⬇ Excel</button>
       <button class="btn small" id="btnPrint">🖨 印刷</button>
+      <button class="btn small" id="btnPrintCheck">✅ チェック印刷</button>
     </div>
     <div class="row">
       <button class="btn primary" id="btnSolve">⚡ 自動生成</button>
@@ -2463,13 +2474,16 @@ function loadDemo(){
    印刷
 ================================================================ */
 $("#btnPrint").addEventListener("click",()=>{ buildPrint(); setTimeout(()=>window.print(),80); });
-function buildPrint(){
+$("#btnPrintCheck").addEventListener("click",()=>{ buildPrint(true); setTimeout(()=>window.print(),80); });
+function buildPrint(check){
   const start=ui.curStart;
   const ctx=buildCtx(start);
   const cyc=ctx.cyc;
   const all=sortedStaff();
+  const now=new Date();
   let html=`<div class="psHead">
     <span>${jpLong(start)} 〜 ${jpLong(addDays(start,27))}</span>
+    ${check?`<span class="chkLabel">【チェック用】印刷: ${jpLong(fmtDate(now))} ${pad2(now.getHours())}:${pad2(now.getMinutes())}</span>`:""}
   </div>`;
   html+='<table class="ps"><colgroup><col class="cName">'+ctx.days.map(()=>"<col>").join("")+"</colgroup>";
   html+=`<tr><th rowspan="2" class="teamHd">${esc(state.settings.team)}</th>`;
@@ -2494,7 +2508,55 @@ function buildPrint(){
     });
     html+="</tr>";
   });
-  html+="</table>";
+  // チェック用: 人数行(8時/9時/中勤/過不足)を本体の下に、警告一覧を表の下に付ける
+  let chkWarns="";
+  if(check){
+    const countOf=(ds,key)=>{
+      let cnt=0;
+      for(const st of ctx.del){
+        const c=cyc.cells[st.id]&&cyc.cells[st.id][ds];
+        if(c && ((key==="h8"&&c.code==="W8")||(key==="h9"&&c.code==="W9")||(key==="md"&&c.code==="MD"))) cnt++;
+      }
+      return cnt;
+    };
+    const demRow=(label,key,top)=>{
+      let r=`<tr class="chkRow${top?" gTop":""}"><td class="nm">${label}</td>`;
+      ctx.info.forEach((inf,d)=>{
+        const dd=ctx.dem[d];
+        const cnt=countOf(inf.ds,key), req=dd[key], tgt=key==="h8"?dd.h8t:req;
+        const cls= cnt<req?"ng": cnt>tgt?"ov":"";
+        r+=`<td class="${cls}">${cnt}/${req}</td>`;
+      });
+      return r+"</tr>";
+    };
+    html+=demRow("8時","h8",true)+demRow("9時","h9")+demRow("中勤","md");
+    let kb=`<tr class="chkRow"><td class="nm">過不足</td>`;
+    const overDays=[];
+    ctx.info.forEach((inf,d)=>{
+      const dd=ctx.dem[d];
+      const total=countOf(inf.ds,"h8")+countOf(inf.ds,"h9")+countOf(inf.ds,"md");
+      const reqT=dd.h8+dd.h9+dd.md, tgtT=dd.h8t+dd.h9+dd.md;
+      const diff=total-reqT;
+      let txt="±0", cls="";
+      if(diff<0){ txt=String(diff); cls="ng"; }
+      else if(total>tgtT){ txt="+"+diff; cls="ov"; overDays.push(mdLabel(inf.ds)+"(+"+(total-tgtT)+")"); }
+      else if(diff>0) txt="+"+diff;
+      kb+=`<td class="${cls}">${txt}</td>`;
+    });
+    html+=kb+"</tr>";
+    const g=gridFromCells(ctx);
+    let w="";
+    if(gridHasWork(g)){
+      const ev=evaluate(ctx,g);
+      const hard=ev.warns.filter(x=>x.lv==="hard"), soft=ev.warns.filter(x=>x.lv==="soft");
+      if(!hard.length && !soft.length) w+=`<div class="i">✔ 違反なし</div>`;
+      hard.forEach(x=>w+=`<div class="h">⛔ ${esc(x.msg)}</div>`);
+      soft.forEach(x=>w+=`<div class="s">⚠ ${esc(x.msg)}</div>`);
+    } else w+=`<div class="i">未生成のサイクルです</div>`;
+    if(overDays.length) w+=`<div class="i">ℹ 目標を超える配置: ${esc(overDays.join("、"))}(余剰は年休枠で吸収できます)</div>`;
+    chkWarns=`<div class="chkWarns"><b>チェック情報(人数行: 配置数/必要数、赤=不足、青=目標超過)</b>${w}</div>`;
+  }
+  html+="</table>"+chkWarns;
   $("#printRoot").innerHTML=html;
 }
 
