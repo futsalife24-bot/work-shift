@@ -34,6 +34,7 @@ table.ynk thead th, table.ynk tbody tr:first-child td, table.ynk tbody tr:first-
   border-top:1.1px solid var(--line);}
 table.ynk td:last-child, table.ynk th:last-child{border-right:1.1px solid var(--line);}
 table.ynk th:first-child, table.ynk td:first-child{border-left:1.1px solid var(--line);}
+table.ynk td .mk{font-size:11pt;font-weight:700;}
 /* 該当月に存在しない日・見出し左上は斜線で無効セル表示。
    背景での描画は印刷時に消えることがあるため、必ず出力される color-adjust を付ける */
 td.cut, th.corner{background:
@@ -75,6 +76,47 @@ function daysInMonth(fy, m){
   return new Date(y, m, 0).getDate(); // m月の末日
 }
 
+/* ---------------- 日本の祝日(勤務表ツールと同じロジック) ---------------- */
+function pad2(n){ return String(n).padStart(2,"0"); }
+function ymd(y,m,d){ return y+"-"+pad2(m)+"-"+pad2(d); }
+function parseDate(ds){ const [y,m,d]=ds.split("-").map(Number); return new Date(y,m-1,d); }
+function fmtDate(dt){ return ymd(dt.getFullYear(),dt.getMonth()+1,dt.getDate()); }
+function addDays(ds,n){ const d=parseDate(ds); d.setDate(d.getDate()+n); return fmtDate(d); }
+function dowOf(ds){ return parseDate(ds).getDay(); }
+const _holCache={};
+function baseHolidays(y){
+  const m={};
+  const add=(mo,d,n)=>{ m[ymd(y,mo,d)]=n; };
+  add(1,1,"元日"); add(2,11,"建国記念の日"); add(2,23,"天皇誕生日");
+  add(4,29,"昭和の日"); add(5,3,"憲法記念日"); add(5,4,"みどりの日"); add(5,5,"こどもの日");
+  add(8,11,"山の日"); add(11,3,"文化の日"); add(11,23,"勤労感謝の日");
+  const nthMon=(mo,n)=>{ const d1=new Date(y,mo-1,1).getDay(); return 1+((1-d1+7)%7)+(n-1)*7; };
+  add(1,nthMon(1,2),"成人の日"); add(7,nthMon(7,3),"海の日");
+  add(9,nthMon(9,3),"敬老の日"); add(10,nthMon(10,2),"スポーツの日");
+  add(3,Math.floor(20.69115+0.242194*(y-2000)-Math.floor((y-2000)/4)),"春分の日");
+  add(9,Math.floor(23.09+0.242194*(y-2000)-Math.floor((y-2000)/4)),"秋分の日");
+  return m;
+}
+function holidaysOfYear(y){
+  if(_holCache[y]) return _holCache[y];
+  const m=baseHolidays(y);
+  let d=ymd(y,1,2);
+  while(d<ymd(y,12,31)){
+    if(!m[d] && m[addDays(d,-1)] && m[addDays(d,1)] && dowOf(d)!==0) m[d]="国民の休日";
+    d=addDays(d,1);
+  }
+  for(const ds of Object.keys(m)){
+    if(dowOf(ds)===0){
+      let t=addDays(ds,1);
+      while(m[t]) t=addDays(t,1);
+      m[t]="振替休日";
+    }
+  }
+  _holCache[y]=m;
+  return m;
+}
+function isHoliday(ds){ return !!holidaysOfYear(parseDate(ds).getFullYear())[ds]; }
+
 function build(){
   const fy = parseInt(document.getElementById("fy").value,10) || 2026;
   document.getElementById("ttl").textContent = fy + "年度 計画年休とりまとめ表";
@@ -89,9 +131,13 @@ function build(){
   let tbody = "";
   MONTHS.forEach(m=>{
     const dim = daysInMonth(fy, m);
+    const y = (m>=4) ? fy : fy+1;
     tbody += `<tr><th>${m}月</th>`;
     for(let d=1; d<=31; d++){
-      tbody += d<=dim ? "<td></td>" : '<td class="cut"></td>';
+      if(d>dim){ tbody += '<td class="cut"></td>'; continue; }
+      const ds = ymd(y,m,d);
+      const mk = isHoliday(ds) ? "祝" : (dowOf(ds)===0 ? "日" : "");
+      tbody += `<td>${mk?`<span class="mk">${mk}</span>`:""}</td>`;
     }
     tbody += "</tr>";
   });

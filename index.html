@@ -213,6 +213,10 @@ table.ps td.nm::after,table.ps th.teamHd::after{content:"";position:absolute;top
 table.ps tr.fRow td{position:relative;border-top:1px solid #000;}
 table.ps tr.fRow td::before{content:"";position:absolute;left:0;right:0;top:0.7mm;height:0;
   border-top:0.3mm solid #000;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+/* 4週サイクルの週区切り(土曜と日曜の間、原紙どおり)は二重線 */
+table.ps th.wkEnd,table.ps td.wkEnd{position:relative;border-right:1px solid #000;}
+table.ps th.wkEnd::after,table.ps td.wkEnd::after{content:"";position:absolute;top:0;bottom:0;right:0.7mm;width:0;
+  border-left:0.3mm solid #000;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 table.ps .red{color:#d00;}
 table.ps .area{display:block;font-size:5.5pt;color:#555;line-height:1;}
 /* 社員区分(正社員/期間雇用/内務)の境界は太線でしっかり区切る */
@@ -2485,11 +2489,13 @@ function buildPrint(check){
     <span>${jpLong(start)} 〜 ${jpLong(addDays(start,27))}</span>
     ${check?`<span class="chkLabel">【チェック用】印刷: ${jpLong(fmtDate(now))} ${pad2(now.getHours())}:${pad2(now.getMinutes())}</span>`:""}
   </div>`;
+  // 4週サイクルの週区切り(土→日の間、原紙どおり)は二重線
+  const wkCls = d => (d%7===6 && d<27) ? " wkEnd" : "";
   html+='<table class="ps"><colgroup><col class="cName">'+ctx.days.map(()=>"<col>").join("")+"</colgroup>";
   html+=`<tr><th rowspan="2" class="teamHd">${esc(state.settings.team)}</th>`;
-  ctx.info.forEach(inf=>{ html+=`<th class="dt ${inf.weekend?"dark":""}">${mdLabel(inf.ds)}</th>`; });
+  ctx.info.forEach((inf,d)=>{ html+=`<th class="dt ${inf.weekend?"dark":""}${wkCls(d)}">${mdLabel(inf.ds)}</th>`; });
   html+="</tr><tr>";
-  ctx.info.forEach(inf=>{ html+=`<th class="dw ${inf.weekend?"dark":""}">${DOW[inf.dow]}${inf.hol?"祝":""}</th>`; });
+  ctx.info.forEach((inf,d)=>{ html+=`<th class="dw ${inf.weekend?"dark":""}${wkCls(d)}">${DOW[inf.dow]}${inf.hol?"祝":""}</th>`; });
   html+="</tr>";
   let prevType=null;
   all.forEach((st,si)=>{
@@ -2498,13 +2504,13 @@ function buildPrint(check){
     const offMap=weeklyOffLabels(ctx,st.id);
     // fRow=先頭社員行(日付ヘッダとの間の二重線をこの行の上辺に描く)
     html+=`<tr class="${gTop?"gTop":""}${si===0?" fRow":""}"><td class="nm">${esc(st.name)}</td>`;
-    ctx.info.forEach(inf=>{
+    ctx.info.forEach((inf,d)=>{
       const cell=cyc.cells[st.id]&&cyc.cells[st.id][inf.ds];
       const lab=cellLabel(st,inf,cell,offMap);
       let inner=`<span class="${lab.red?"red":""}">${esc(lab.t)}</span>`;
       if(ui.showArea && cell && cell.area && (cell.code==="W8"||cell.code==="MD"||cell.code==="TSU"))
         inner+=`<span class="area">${esc(areaName(cell.area))}</span>`;
-      html+=`<td>${inner}</td>`;
+      html+=`<td class="${wkCls(d).trim()}">${inner}</td>`;
     });
     html+="</tr>";
   });
@@ -2525,7 +2531,7 @@ function buildPrint(check){
         const dd=ctx.dem[d];
         const cnt=countOf(inf.ds,key), req=dd[key], tgt=key==="h8"?dd.h8t:req;
         const cls= cnt<req?"ng": cnt>tgt?"ov":"";
-        r+=`<td class="${cls}">${cnt}/${req}</td>`;
+        r+=`<td class="${cls} ${wkCls(d).trim()}">${cnt}/${req}</td>`;
       });
       return r+"</tr>";
     };
@@ -2541,7 +2547,7 @@ function buildPrint(check){
       if(diff<0){ txt=String(diff); cls="ng"; }
       else if(total>tgtT){ txt="+"+diff; cls="ov"; overDays.push(mdLabel(inf.ds)+"(+"+(total-tgtT)+")"); }
       else if(diff>0) txt="+"+diff;
-      kb+=`<td class="${cls}">${txt}</td>`;
+      kb+=`<td class="${cls} ${wkCls(d).trim()}">${txt}</td>`;
     });
     html+=kb+"</tr>";
     const g=gridFromCells(ctx);
