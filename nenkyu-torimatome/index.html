@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>計画年休とりまとめ表</title>
+<style>
+:root{ --line:#000; }
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:#e9eaee;
+  font-family:"Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",system-ui,sans-serif;}
+.toolbar{position:sticky;top:0;z-index:10;background:#222;color:#fff;padding:10px 14px;
+  display:flex;align-items:center;gap:10px;}
+.toolbar b{font-size:14px;}
+.toolbar .spacer{flex:1;}
+.toolbar button{border:0;background:#2563eb;color:#fff;border-radius:8px;padding:8px 16px;
+  font-size:13px;cursor:pointer;}
+.toolbar label{font-size:12px;display:flex;align-items:center;gap:5px;}
+.sheetWrap{padding:16px;overflow:auto;}
+#sheet{background:#fff;margin:0 auto;padding:8mm 8mm 6mm;width:297mm;min-height:180mm;}
+h1{font-size:15pt;text-align:center;margin:0 0 4mm;letter-spacing:.06em;}
+table.ynk{border-collapse:collapse;width:100%;table-layout:fixed;}
+table.ynk th,table.ynk td{border:0.6px solid var(--line);padding:0;text-align:center;
+  overflow:hidden;position:relative;}
+table.ynk col.cMonth{width:9mm;}
+table.ynk col.cDay{width:auto;}
+table.ynk thead th{height:6mm;font-size:8.5pt;font-weight:700;}
+table.ynk thead th.corner{border:1.1px solid var(--line);}
+table.ynk tbody th{writing-mode:vertical-rl;text-orientation:upright;letter-spacing:2px;
+  font-size:9.5pt;font-weight:700;border:1.1px solid var(--line);}
+table.ynk tbody td{height:11mm;}
+table.ynk tr:nth-child(3n) td, table.ynk tr:nth-child(3n) th{border-bottom:1.1px solid var(--line);}
+table.ynk thead th, table.ynk tbody tr:first-child td, table.ynk tbody tr:first-child th{
+  border-top:1.1px solid var(--line);}
+table.ynk td:last-child, table.ynk th:last-child{border-right:1.1px solid var(--line);}
+table.ynk th:first-child, table.ynk td:first-child{border-left:1.1px solid var(--line);}
+/* 該当月に存在しない日・見出し左上は斜線で無効セル表示。
+   背景での描画は印刷時に消えることがあるため、必ず出力される color-adjust を付ける */
+td.cut, th.corner{background:
+  linear-gradient(to top right, transparent calc(50% - 0.4px), var(--line) calc(50% - 0.4px), var(--line) calc(50% + 0.4px), transparent calc(50% + 0.4px));
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+
+@media print{
+  body{background:#fff;}
+  .toolbar{display:none;}
+  .sheetWrap{padding:0;}
+  #sheet{width:auto;padding:5mm 6mm;}
+  @page{size:A4 landscape;margin:6mm;}
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <b>計画年休とりまとめ表(枠組みのみ・記入欄空欄)</b>
+  <span class="spacer"></span>
+  <label>年度 <input type="number" id="fy" value="2026" style="width:64px;"></label>
+  <button id="btnPrint">🖨 印刷 / PDF保存</button>
+</div>
+
+<div class="sheetWrap">
+  <div id="sheet">
+    <h1 id="ttl">2026年度 計画年休とりまとめ表</h1>
+    <table class="ynk" id="tbl"></table>
+  </div>
+</div>
+
+<script>
+"use strict";
+const MONTHS = [4,5,6,7,8,9,10,11,12,1,2,3]; // 年度=4月始まり
+
+function daysInMonth(fy, m){
+  // 1〜3月は翌年扱い
+  const y = (m>=4) ? fy : fy+1;
+  return new Date(y, m, 0).getDate(); // m月の末日
+}
+
+function build(){
+  const fy = parseInt(document.getElementById("fy").value,10) || 2026;
+  document.getElementById("ttl").textContent = fy + "年度 計画年休とりまとめ表";
+
+  let cols = '<col class="cMonth">';
+  for(let d=1; d<=31; d++) cols += '<col class="cDay">';
+
+  let thead = '<tr><th class="corner"></th>';
+  for(let d=1; d<=31; d++) thead += `<th>${d}</th>`;
+  thead += "</tr>";
+
+  let tbody = "";
+  MONTHS.forEach(m=>{
+    const dim = daysInMonth(fy, m);
+    tbody += `<tr><th>${m}月</th>`;
+    for(let d=1; d<=31; d++){
+      tbody += d<=dim ? "<td></td>" : '<td class="cut"></td>';
+    }
+    tbody += "</tr>";
+  });
+
+  document.getElementById("tbl").innerHTML =
+    "<colgroup>"+cols+"</colgroup><thead>"+thead+"</thead><tbody>"+tbody+"</tbody>";
+}
+document.getElementById("fy").addEventListener("change", build);
+document.getElementById("btnPrint").addEventListener("click", ()=>window.print());
+build();
+</script>
+</body>
+</html>
