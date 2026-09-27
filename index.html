@@ -239,6 +239,11 @@ body{line-height:1.5;}
 .textSizeControl select{padding:4px 6px;min-height:36px;}
 #cycleLabelTop{margin-left:auto;}
 .row>*{min-width:0;max-width:100%;}
+.cycleNav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-width:520px;margin:6px auto 14px;}
+.cycleNav #cycleLabel{grid-column:1/-1;grid-row:1;text-align:center;overflow-wrap:anywhere;line-height:1.6;}
+.cycleNav .btn{width:100%;min-height:44px;}
+.cycleNav #cyclePrev{grid-column:1;grid-row:2;}
+.cycleNav #cycleNext{grid-column:2;grid-row:2;}
 .btn,.chk{white-space:normal;overflow-wrap:anywhere;line-height:1.5;}
 .panel,.staffCard,.guideCards>*{min-width:0;overflow-wrap:anywhere;}
 input[type=text],input[type=number],input[type=date],select{font-size:max(16px,calc(16px * var(--text-scale)));font-family:inherit;}
@@ -284,11 +289,12 @@ table.mini input{width:calc(60px * var(--text-scale));}table.mini input.wide{wid
 <!-- ============ 勤務表 ============ -->
 <section id="page-sched" class="page active">
   <div class="panel">
-    <div class="row">
+    <div class="cycleNav" role="group" aria-label="対象期間を4週間ずつ切り替える">
       <button class="btn small" id="cyclePrev">◀ 前の4週間</button>
       <b id="cycleLabel" style="font-size:calc(13.5px * var(--text-scale, 1));"></b>
       <button class="btn small" id="cycleNext">次の4週間 ▶</button>
-      <span class="spacer" style="flex:1"></span>
+    </div>
+    <div class="row" role="group" aria-label="勤務表の出力">
       <button class="btn small" id="btnXlsx">⬇ Excel</button>
       <button class="btn small" id="btnPrint">🖨 印刷</button>
       <button class="btn small" id="btnPrintCheck">✅ チェック印刷</button>
