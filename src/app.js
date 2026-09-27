@@ -1334,7 +1334,7 @@ function applyFit(){
   const availW=wrap.clientWidth-pad;
   const vpH=(window.visualViewport? window.visualViewport.height : window.innerHeight);
   const top=wrap.getBoundingClientRect().top;
-  const bottomUi=document.body.classList.contains("landmode")?10:74; // 下タブの分
+  const bottomUi=document.body.classList.contains("landmode")?10:$('#tabs').getBoundingClientRect().height+12;
   const availH=Math.max(140, vpH-top-bottomUi);
   const w=tbl.offsetWidth, h=tbl.offsetHeight;
   const scale=Math.min(1, availW/w, availH/h)*0.99;
@@ -1640,7 +1640,7 @@ function renderPre(){
     const red=["OF","HOL","KEI","NEN","NAT","FUY"].includes(code);
     html+=`<div class="dcell ${inf.hol?"holi":inf.weekend?"we":""}" data-ds="${ds}">
       <span class="dt">${mdLabel(ds)}${inf.hol?"祝":""}</span>
-      <span class="mk ${red?"red":""}">${PRE_LABEL[code]||""}${code==="TSU"&&f.area?`<span style="font-size:9px;display:block;">${esc(areaName(f.area))}</span>`:""}</span>
+      <span class="mk ${red?"red":""}">${PRE_LABEL[code]||""}${code==="TSU"&&f.area?`<span style="font-size:calc(9px * var(--text-scale, 1));display:block;">${esc(areaName(f.area))}</span>`:""}</span>
     </div>`;
   });
   html+="</div>";
@@ -2447,3 +2447,27 @@ document.addEventListener("pointerdown",()=>{ if(!ui.fit) lockPortrait(); },{cap
 if(screen.orientation && screen.orientation.addEventListener){
   screen.orientation.addEventListener("change",()=>{ if(!ui.fit) lockPortrait(); });
 }
+
+
+/* 表示設定は端末ごとに保存し、勤務データや印刷倍率とは分離する。 */
+const TEXT_SIZES={small:0.9,standard:1,large:1.25};
+function applyTextSize(value){
+  const size=Object.hasOwn(TEXT_SIZES,value)?value:'standard';
+  document.documentElement.style.setProperty('--text-scale',TEXT_SIZES[size]);
+  $('#textSize').value=size;
+  requestAnimationFrame(()=>{updateFrameSize();if(ui.fit) applyFit();});
+}
+function updateFrameSize(){
+  const root=document.documentElement;
+  root.style.setProperty('--topbar-height',$('#topbar').getBoundingClientRect().height+'px');
+  root.style.setProperty('--nav-height',$('#tabs').getBoundingClientRect().height+'px');
+}
+let storedTextSize='standard';
+try{storedTextSize=localStorage.getItem('kinmuhyo_text_size')||'standard';}catch(e){}
+applyTextSize(storedTextSize);
+$('#textSize').addEventListener('change',e=>{
+  applyTextSize(e.target.value);
+  try{localStorage.setItem('kinmuhyo_text_size',e.target.value);}catch(e){toast('文字サイズを保存できませんでした。この画面には適用されています。');}
+});
+const frameObserver=new ResizeObserver(updateFrameSize);
+frameObserver.observe($('#topbar'));frameObserver.observe($('#tabs'));
