@@ -2822,7 +2822,7 @@ $("#btnXlsx").addEventListener("click",()=>{
 /* 作成ガイドは既存の入力・生成・出力を使い、業務ルールを変更しない。 */
 function guideGo(step){
   ui.guideStep=step;
-  switchTab(['sched','staff','pre','sched','review'][step]);
+  switchTab(['sched','pre','sched','review'][step]);
   renderGuide();
 }
 function renderGuide(){
@@ -2831,17 +2831,17 @@ function renderGuide(){
     box.innerHTML='<h2>順番に答えて勤務表をつくる</h2><p class="note">登録済みの職場ルールを使って、28日間の勤務表を作成します。</p><button class="btn primary" id="startGuide">勤務表をつくる</button><details><summary>別の人に今の設定を渡すには</summary><p class="note">設定の「エクスポート」で書き出したJSONとアプリを渡し、相手の端末で「インポート」してください。JSONには社員情報・保存済み勤務表も含まれます。読み込み後は相手の端末内で編集・保存されます。</p></details>';
     $('#startGuide').onclick=()=>guideGo(0);return;
   }
-  const step=ui.guideStep, labels=['期間','メンバー','希望入力','作成','最終チェック'];
+  const step=ui.guideStep, labels=['期間','希望入力','作成','最終チェック'];
   const cyc=getCycle(ui.curStart);
   const count=Object.values(cyc.fixed).reduce((n,r)=>n+Object.keys(r).length,0);
-  const titles=['どの期間の勤務表を作りますか？','メンバーや担当できる勤務に変更はありますか？','休みの希望・決まっている勤務はありますか？','この内容で勤務表を作りますか？','人ごと・日ごとの両方を確認しましょう'];
-  const notes=['下の「前の4週間」「次の4週間」で期間を選び、「メンバー確認へ」で進んでください。','登録内容を確認し、変更がある人だけ編集してください。変更がなければ次へ進めます。','入力方法を人ごと／日ごとから選べます。途中で切り替えても入力は共通です。希望がなければそのまま次へ進めます。年休のおまかせ枠も下で確認できます。',`登録 ${state.staff.length}人・固定入力 ${count}件。下の「自動生成」を押してください。既存の必要人数・勤務ルール・年休枠で作成します。生成後は次へ進んでください。`,'警告と未入力を確認し、必要な箇所を修正してください。内務は自動チェックの対象外なので目視でも確認してください。出力は下のボタンから行えます。'];
-  box.innerHTML='<div class="guideSteps">'+labels.map((t,i)=>`<button class="btn small ${i===step?'primary':''}" data-step="${i}" ${i===step?'aria-current="step"':''}>${i+1}. ${t}</button>`).join('')+`</div><b>${esc(cycleLabel(ui.curStart))}</b><h2>${titles[step]}</h2><p class="note">${notes[step]}</p><div class="row"><button class="btn" id="guideBack" ${step===0?'disabled':''}>前の手順へ</button><button class="btn primary" id="guideNext">${['メンバー確認へ','希望入力へ','作成内容の確認へ','最終チェックへ','ガイドを閉じる'][step]}</button>${step===4?'<button class="btn" id="guideExcel">Excel出力</button><button class="btn" id="guidePrint">印刷</button>':''}<button class="btn small" id="guideClose">通常画面へ</button></div>`;
+  const titles=['勤務表を作る期間を、下から選んでください。','休みの希望・決まっている勤務はありますか？','この内容で勤務表を作りますか？','人ごと・日ごとの両方を確認しましょう'];
+  const notes=['表示されている期間でよければ、「希望入力へ」進んでください。','入力方法を人ごと／日ごとから選べます。途中で切り替えても入力は共通です。希望がなければそのまま次へ進めます。年休のおまかせ枠も下で確認できます。',`登録 ${state.staff.length}人・固定入力 ${count}件。下の「自動生成」を押してください。既存の必要人数・勤務ルール・年休枠で作成します。生成後は次へ進んでください。`,'警告と未入力を確認し、必要な箇所を修正してください。内務は自動チェックの対象外なので目視でも確認してください。出力は下のボタンから行えます。'];
+  box.innerHTML='<div class="guideSteps">'+labels.map((t,i)=>`<button class="btn small ${i===step?'primary':''}" data-step="${i}" ${i===step?'aria-current="step"':''}>${i+1}. ${t}</button>`).join('')+`</div><h2>${titles[step]}</h2><p class="note">${notes[step]}</p><div class="row"><button class="btn" id="guideBack" ${step===0?'disabled':''}>前の手順へ</button><button class="btn primary" id="guideNext">${['希望入力へ','作成内容の確認へ','最終チェックへ','ガイドを閉じる'][step]}</button>${step===3?'<button class="btn" id="guideExcel">Excel出力</button><button class="btn" id="guidePrint">印刷</button>':''}<button class="btn small" id="guideClose">通常画面へ</button></div>`;
   box.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>guideGo(Number(b.dataset.step)));
   $('#guideBack').onclick=()=>guideGo(step-1);
-  $('#guideNext').onclick=()=>{if(step===4){ui.guideStep=null;renderGuide();}else guideGo(step+1);};
+  $('#guideNext').onclick=()=>{if(step===3){ui.guideStep=null;renderGuide();}else guideGo(step+1);};
   $('#guideClose').onclick=()=>{ui.guideStep=null;renderGuide();};
-  if(step===4){$('#guideExcel').onclick=()=>$('#btnXlsx').click();$('#guidePrint').onclick=()=>$('#btnPrint').click();}
+  if(step===3){$('#guideExcel').onclick=()=>$('#btnXlsx').click();$('#guidePrint').onclick=()=>$('#btnPrint').click();}
 }
 function renderReview(){
   const ctx=buildCtx(ui.curStart), g=gridFromCells(ctx), ev=evaluate(ctx,g), all=sortedStaff();

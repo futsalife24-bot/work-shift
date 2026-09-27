@@ -18,6 +18,7 @@ const path=require('path'),assert=require('assert');
   }
  }
  const before=await page.locator('#cycleLabel').innerText();await page.click('#cycleNext');assert.notEqual(await page.locator('#cycleLabel').innerText(),before);await page.click('#cyclePrev');assert.equal(await page.locator('#cycleLabel').innerText(),before);
- await page.click('#guideNext');assert.equal(await page.locator('#page-staff').getAttribute('class'),'page active');
+ assert.equal(await page.locator('#creationGuide').innerText().then(s=>s.includes(before)),false,'guide must not repeat the period');
+ await page.click('#guideNext');assert.equal(await page.locator('#page-pre').getAttribute('class'),'page active');
  console.log('PASS: 3 sizes x 3 widths; equal-height row position, equal widths, date above, exports below, no page overflow, period and guide navigation');await browser.close();
 })().catch(e=>{console.error(e);process.exit(1)});

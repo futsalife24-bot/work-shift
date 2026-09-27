@@ -4,7 +4,7 @@ const fs=require('fs'),path=require('path'),assert=require('assert');
  const browser=await chromium.launch({headless:true});const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('file:///'+path.resolve(process.env.TEST_HTML||'src/index.html').replaceAll('\\','/'));
  await page.evaluate(()=>{loadDemo();save();renderAll();});
- await page.click('#startGuide');await page.click('#guideNext');await page.click('#guideNext');
+ await page.click('#startGuide');assert.equal(await page.locator('.guideSteps button').count(),4);assert.equal(await page.locator('#creationGuide').innerText().then(s=>s.includes('メンバー')),false);await page.click('#guideNext');
  await page.selectOption('#preMode','day');await page.locator('#preCal .dcell').first().click();
  const first=await page.evaluate(()=>({sid:ui.preStaff,ds:ui.preDay,code:getCycle(ui.curStart).fixed[ui.preStaff][ui.preDay].code}));assert.equal(first.code,'OF');
  await page.selectOption('#preMode','person');assert.equal(await page.locator('#preCal .dcell .mk').first().innerText(),'休');
