@@ -171,7 +171,7 @@ function save(){
 
 /* ---------------- サイクル ---------------- */
 const ui = { curStart:null, showArea:false, sel:null, preStaff:null, fit:false,
-  undoSnap:null, preCode:"OF", backupBannerDismissedFor:null };
+  guideStep:null, preMode:"person", preDay:null, reviewMode:"person", reviewTarget:null, undoSnap:null, preCode:"OF", backupBannerDismissedFor:null };
 function cycleIndexOf(ds){
   const diff = Math.round((parseDate(ds)-parseDate(state.settings.anchor))/86400000);
   return Math.floor(diff/28);
@@ -986,6 +986,7 @@ function switchTab(page){
   $$(".page").forEach(p=>p.classList.remove("active"));
   $("#page-"+page).classList.add("active");
   closePalette();
+  if(page==="review") renderReview();
   if(page==="pre") renderPre();
   if(page==="staff") renderStaffList();
   if(page==="conf") renderConf();
@@ -1013,6 +1014,7 @@ function backupBannerNeeded(){
   return days>14;
 }
 function renderSched(){
+  renderGuide();
   const start=ui.curStart;
   $("#cycleLabel").textContent = cycleLabel(start);
   $("#cycleLabelTop").textContent = mdLabel(start)+"〜"+mdLabel(addDays(start,27));
@@ -1600,9 +1602,10 @@ $("#btnClearCells").addEventListener("click",()=>{
 /* ================================================================
    UI: 事前入力
 ================================================================ */
-const PRE_LABEL={ "":"", OF:"休", HOL:"祝", KEI:"計", NEN:"年", NAT:"夏", FUY:"冬", TSU:"通" };
+const PRE_LABEL={ W8:"8時", W9:"9時", MD:"中勤", "":"", OF:"休", HOL:"祝", KEI:"計", NEN:"年", NAT:"夏", FUY:"冬", TSU:"通" };
 // ペイント方式のコードパレット([消去]は空文字コード=強制クリア)
 const PRE_PAINT=[
+  {code:"W8", t:"8時"},{code:"W9", t:"9時"},{code:"MD", t:"中勤"},
   {code:"OF", t:"休"},{code:"HOL", t:"祝"},{code:"KEI", t:"計"},{code:"NEN", t:"年"},
   {code:"NAT", t:"夏"},{code:"FUY", t:"冬"},{code:"TSU", t:"通"},
   {code:"", t:"消去"}
@@ -1610,6 +1613,14 @@ const PRE_PAINT=[
 function renderPre(){
   const sel=$("#preStaffSel");
   const all=sortedStaff();
+  const days=Array.from({length:28},(_,i)=>addDays(ui.curStart,i));
+  if(!days.includes(ui.preDay)) ui.preDay=days[0];
+  $("#preMode").value=ui.preMode;
+  $("#preMode").onchange=e=>{ui.preMode=e.target.value;renderPre();};
+  sel.hidden=ui.preMode==="day";
+  $("#preDaySel").hidden=ui.preMode!=="day";
+  $("#preDaySel").innerHTML=days.map(ds=>`<option value="${ds}" ${ds===ui.preDay?"selected":""}>${mdLabel(ds)}（${DOW[dowOf(ds)]}）</option>`).join("");
+  $("#preDaySel").onchange=e=>{ui.preDay=e.target.value;renderPre();};
   if(!all.length){ sel.innerHTML="<option>社員未登録</option>"; $("#preCal").innerHTML=""; $("#quotaTable").innerHTML=""; return; }
   if(!ui.preStaff || !all.find(s=>s.id===ui.preStaff)) ui.preStaff=all[0].id;
   sel.innerHTML=all.map(s=>`<option value="${s.id}" ${s.id===ui.preStaff?"selected":""}>${esc(s.name)}(${TYPE_LABEL[s.type]})</option>`).join("");
@@ -1633,6 +1644,12 @@ function renderPre(){
     </div>`;
   });
   html+="</div>";
+  if(ui.preMode==="day"){
+    html='<div class="guideCards">'+all.map(st=>{
+      const f=cyc.fixed[st.id]?.[ui.preDay];
+      return `<button class="btn dcell" data-sid="${esc(st.id)}" data-ds="${ui.preDay}">${esc(st.name)}：${esc(PRE_LABEL[f?.code]||"未指定")}${f?.area?' / '+esc(areaName(f.area)):''}</button>`;
+    }).join("")+"</div>";
+  }
   $("#preCal").innerHTML=segHtml+html;
   $$("#preSeg .chk").forEach(b=>{
     b.addEventListener("click",()=>{
@@ -1643,6 +1660,7 @@ function renderPre(){
   $$("#preCal .dcell").forEach(dc=>{
     dc.addEventListener("click",()=>{
       const ds=dc.dataset.ds;
+      if(dc.dataset.sid) ui.preStaff=dc.dataset.sid;
       const code=ui.preCode;
       cyc.fixed[ui.preStaff]=cyc.fixed[ui.preStaff]||{};
       const cur=cyc.fixed[ui.preStaff][ds];
@@ -2361,6 +2379,61 @@ $("#btnXlsx").addEventListener("click",()=>{
 /* ================================================================
    起動
 ================================================================ */
+/* 作成ガイドは既存の入力・生成・出力を使い、業務ルールを変更しない。 */
+function guideGo(step){
+  ui.guideStep=step;
+  switchTab(['sched','staff','pre','sched','review'][step]);
+  renderGuide();
+}
+function renderGuide(){
+  const box=$('#creationGuide');
+  if(ui.guideStep==null){
+    box.innerHTML='<h2>順番に答えて勤務表をつくる</h2><p class="note">登録済みの職場ルールを使って、28日間の勤務表を作成します。</p><button class="btn primary" id="startGuide">勤務表をつくる</button><details><summary>別の人に今の設定を渡すには</summary><p class="note">設定の「エクスポート」で書き出したJSONとアプリを渡し、相手の端末で「インポート」してください。JSONには社員情報・保存済み勤務表も含まれます。読み込み後は相手の端末内で編集・保存されます。</p></details>';
+    $('#startGuide').onclick=()=>guideGo(0);return;
+  }
+  const step=ui.guideStep, labels=['期間','メンバー','希望入力','作成','最終チェック'];
+  const cyc=getCycle(ui.curStart);
+  const count=Object.values(cyc.fixed).reduce((n,r)=>n+Object.keys(r).length,0);
+  const titles=['どの期間の勤務表を作りますか？','メンバーや担当できる勤務に変更はありますか？','休みの希望・決まっている勤務はありますか？','この内容で勤務表を作りますか？','人ごと・日ごとの両方を確認しましょう'];
+  const notes=['下の「前」「次」で対象期間を選んでください。','登録内容を確認し、変更がある人だけ編集してください。変更がなければ次へ進めます。','入力方法を人ごと／日ごとから選べます。途中で切り替えても入力は共通です。希望がなければそのまま次へ進めます。年休のおまかせ枠も下で確認できます。',`登録 ${state.staff.length}人・固定入力 ${count}件。下の「自動生成」を押してください。既存の必要人数・勤務ルール・年休枠で作成します。生成後は次へ進んでください。`,'警告と未入力を確認し、必要な箇所を修正してください。内務は自動チェックの対象外なので目視でも確認してください。出力は下のボタンから行えます。'];
+  box.innerHTML='<div class="guideSteps">'+labels.map((t,i)=>`<button class="btn small ${i===step?'primary':''}" data-step="${i}" ${i===step?'aria-current="step"':''}>${i+1}. ${t}</button>`).join('')+`</div><b>${esc(cycleLabel(ui.curStart))}</b><h2>${titles[step]}</h2><p class="note">${notes[step]}</p><div class="row"><button class="btn" id="guideBack" ${step===0?'disabled':''}>戻る</button><button class="btn primary" id="guideNext">${step===4?'ガイドを閉じる':'次へ'}</button>${step===4?'<button class="btn" id="guideExcel">Excel出力</button><button class="btn" id="guidePrint">印刷</button>':''}<button class="btn small" id="guideClose">通常画面へ</button></div>`;
+  box.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>guideGo(Number(b.dataset.step)));
+  $('#guideBack').onclick=()=>guideGo(step-1);
+  $('#guideNext').onclick=()=>{if(step===4){ui.guideStep=null;renderGuide();}else guideGo(step+1);};
+  $('#guideClose').onclick=()=>{ui.guideStep=null;renderGuide();};
+  if(step===4){$('#guideExcel').onclick=()=>$('#btnXlsx').click();$('#guidePrint').onclick=()=>$('#btnPrint').click();}
+}
+function renderReview(){
+  const ctx=buildCtx(ui.curStart), g=gridFromCells(ctx), ev=evaluate(ctx,g), all=sortedStaff();
+  const person=ui.reviewMode==='person', sel=$('#reviewSelect');
+  $('#reviewPerson').classList.toggle('primary',person);$('#reviewDay').classList.toggle('primary',!person);
+  $('#reviewPerson').onclick=()=>{ui.reviewMode='person';ui.reviewTarget=null;renderReview();};
+  $('#reviewDay').onclick=()=>{ui.reviewMode='day';ui.reviewTarget=null;renderReview();};
+  const options=person?all.map(s=>({id:s.id,label:s.name})):ctx.days.map(ds=>({id:ds,label:mdLabel(ds)+'（'+DOW[dowOf(ds)]+'）'}));
+  if(!options.some(o=>o.id===ui.reviewTarget)) ui.reviewTarget=options[0]?.id;
+  sel.innerHTML=options.map(o=>`<option value="${esc(o.id)}" ${o.id===ui.reviewTarget?'selected':''}>${esc(o.label)}</option>`).join('');
+  sel.onchange=()=>{ui.reviewTarget=sel.value;renderReview();};
+  const body=$('#reviewBody');
+  if(!all.length){body.textContent='社員が未登録です。社員画面で登録してください。';return;}
+  const sid=person?ui.reviewTarget:null, d=person?null:ctx.days.indexOf(ui.reviewTarget);
+  const items=person?ctx.days.map(ds=>({sid,ds})):all.map(st=>({sid:st.id,ds:ui.reviewTarget}));
+  const codes=items.map(x=>ctx.cyc.cells[x.sid]?.[x.ds]?.code||'');
+  const blank=codes.filter(c=>!c).length;
+  const warnings=ev.warns.filter(w=>person?w.s===ctx.del.findIndex(s=>s.id===sid):w.d===d);
+  const general=ev.warns.filter(w=>w.s==null&&w.d==null);
+  const mismatch=items.filter(x=>{const f=ctx.cyc.fixed[x.sid]?.[x.ds], c=ctx.cyc.cells[x.sid]?.[x.ds];return f&&(f.code!==c?.code||(f.area&&f.area!==c?.area));});
+  let summary=person?`勤務 ${codes.filter(isWork).length}日 ／ 週休・非番 ${codes.filter(c=>c==='OF').length}日 ／ 年休等 ${codes.filter(c=>['NEN','KEI','NAT','FUY'].includes(c)).length}日 ／ 祝休 ${codes.filter(c=>c==='HOL').length}日`:`配達員の人数（実際／必要）：8時 ${g.filter(r=>r[d]==='W8').length}/${ctx.dem[d].h8}、9時 ${g.filter(r=>r[d]==='W9').length}/${ctx.dem[d].h9}、中勤 ${g.filter(r=>r[d]==='MD').length}/${ctx.dem[d].md}`;
+  body.innerHTML=`<p>${summary}</p><p>未入力 ${blank}件 ／ 希望・固定入力との不一致 ${mismatch.length}件</p><p class="note">${person?'日ごとの人数不足は「日ごと」でも確認してください。':'連勤・休日数は「人ごと」でも確認してください。'} ${!gridHasWork(g)?'勤務表は未生成または勤務未入力です。':''}</p>`;
+  body.innerHTML+=warnings.length?'<ul>'+warnings.map(w=>`<li class="${w.lv==='hard'?'red':''}">${esc(w.msg)}</li>`).join('')+'</ul>':'<p class="note">この対象の自動チェック警告はありません（未入力や目視確認は別途必要です）。</p>';
+  if(general.length) body.innerHTML+='<p>全体の注意：</p><ul>'+general.map(w=>`<li>${esc(w.msg)}</li>`).join('')+'</ul>';
+  body.innerHTML+='<div class="guideCards">'+items.map(x=>{
+    const st=all.find(s=>s.id===x.sid), c=ctx.cyc.cells[x.sid]?.[x.ds], f=ctx.cyc.fixed[x.sid]?.[x.ds];
+    const label=PRE_LABEL[c?.code]||c?.code||'未入力';
+    return `<button class="btn" data-sid="${esc(x.sid)}" data-ds="${x.ds}">${esc(person?mdLabel(x.ds)+'（'+DOW[dowOf(x.ds)]+'）':st.name)}：${esc(label)}${c?.area?' / '+esc(areaName(c.area)):''}${f?'〈固定：'+esc(PRE_LABEL[f.code]||f.code)+'〉':''}</button>`;
+  }).join('')+'</div>';
+  body.querySelectorAll('[data-sid]').forEach(b=>b.onclick=()=>{switchTab('sched');selectCell(b.dataset.sid,b.dataset.ds);});
+}
+
 function renderAll(){
   renderSched(); renderPre(); renderStaffList(); renderConf();
 }

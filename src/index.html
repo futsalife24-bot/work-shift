@@ -95,6 +95,7 @@ tr.demandRow th{font-size:10px;color:var(--sub);}
 #landBar{display:none;}
 body.landmode #topbar, body.landmode #tabs,
 body.landmode #page-sched .panel, body.landmode #page-sched .note{display:none !important;}
+body.landmode #creationGuide{display:none;}
 body.landmode main{padding:4px 6px;max-width:none;}
 body.landmode #landBar{display:flex;gap:10px;padding:4px 0 6px;}
 body.landmode #gridWrap{max-height:calc(100vh - 52px);max-height:calc(100dvh - 52px);}
@@ -227,6 +228,7 @@ table.ps tr.chkRow td.ov{color:#1d4ed8;font-weight:700;}
 #printRoot .chkWarns .h{color:#b91c1c;}
 #printRoot .chkWarns .s{color:#92400e;}
 #printRoot .chkWarns .i{color:#1e50a0;}
+.guideCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:12px 0}.guideCards .btn{white-space:normal;text-align:left;min-height:48px}.guideSteps{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}#creationGuide{border:2px solid #93c5fd}#creationGuide h2{margin:8px 0}#reviewBody li{margin:6px 0} [hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -239,12 +241,14 @@ table.ps tr.chkRow td.ov{color:#1d4ed8;font-weight:700;}
 
 <div id="tabs">
   <button data-page="sched" class="active"><span class="ico">📅</span>勤務表</button>
+  <button data-page="review"><span class="ico">✅</span>最終チェック</button>
   <button data-page="pre"><span class="ico">✏️</span>事前入力</button>
   <button data-page="staff"><span class="ico">👥</span>社員</button>
   <button data-page="conf"><span class="ico">⚙️</span>設定</button>
 </div>
 
 <main>
+<div class="panel" id="creationGuide"></div>
 <!-- ============ 勤務表 ============ -->
 <section id="page-sched" class="page active">
   <div class="panel">
@@ -278,16 +282,18 @@ table.ps tr.chkRow td.ov{color:#1d4ed8;font-weight:700;}
   </div>
 </section>
 
+<section id="page-review" class="page"><div class="panel"><h2>最終チェック</h2><p class="note">人ごと・日ごとの両方を確認してください。勤務を押すと修正できます。修正後は「最終チェック」で再確認してください。</p><div class="row"><button class="btn" id="reviewPerson">人ごと</button><button class="btn" id="reviewDay">日ごと</button><select aria-label="確認対象" id="reviewSelect"></select></div><div id="reviewBody"></div></div></section>
 <!-- ============ 事前入力 ============ -->
 <section id="page-pre" class="page">
   <div class="panel">
     <h2>事前入力(希望休・計年・年休・夏冬・通区)</h2>
     <div class="row">
-      <select id="preStaffSel"></select>
+      <label>入力方法 <select id="preMode"><option value="person">人ごと</option><option value="day">日ごと</option></select></label>
+      <select aria-label="入力する人" id="preStaffSel"></select><select aria-label="入力する日" id="preDaySel" hidden></select>
       <span class="note">対象サイクル: <b id="preCycleLabel"></b></span>
     </div>
     <div class="row" style="gap:4px;">
-      <span class="note">上でコードを選び、日をタップで塗る/もう一度タップで解除</span>
+      <span class="note">上でコードを選び、日または人をタップで入力／もう一度タップで解除</span>
     </div>
     <div id="preCal"></div>
   </div>
