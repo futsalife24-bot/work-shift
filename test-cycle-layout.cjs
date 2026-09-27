@@ -8,11 +8,11 @@ const path=require('path'),assert=require('assert');
   await page.setViewportSize({width,height:900});
   for(const size of ['small','standard','large']){
    await page.selectOption('#textSize',size);
-   const prev=await page.locator('#cyclePrev').boundingBox(),next=await page.locator('#cycleNext').boundingBox(),label=await page.locator('#cycleLabel').boundingBox(),output=await page.locator('#btnXlsx').boundingBox();
+   const prev=await page.locator('#cyclePrev').boundingBox(),next=await page.locator('#cycleNext').boundingBox(),label=await page.locator('#cycleLabel').boundingBox();
    assert(Math.abs(prev.y-next.y)<1,'period buttons must stay on the same row');
    assert(Math.abs(prev.width-next.width)<1,'period buttons must have equal widths');
    assert(label.y+label.height<=prev.y,'date must be above both buttons');
-   assert(output.y>=next.y+next.height,'export controls must have a separate row');
+   assert.equal(await page.locator('.scheduleTools').isVisible(),false,'period step must only show period controls');
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'page overflow');
    if(width===390){await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:`cycle-layout-${size}.png`});}
   }

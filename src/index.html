@@ -244,6 +244,17 @@ body{line-height:1.5;}
 .cycleNav .btn{width:100%;min-height:44px;}
 .cycleNav #cyclePrev{grid-column:1;grid-row:2;}
 .cycleNav #cycleNext{grid-column:2;grid-row:2;}
+.scheduleTools{border-top:1px solid var(--line);padding-top:12px;}
+.scheduleTools #btnSolve{display:block;width:100%;min-height:46px;}
+.scheduleTools details{margin-top:10px;}
+.scheduleTools summary{cursor:pointer;color:var(--accent);padding:8px 0;font-weight:600;}
+.toolGroup{padding:10px 0;border-top:1px solid var(--line);}
+.toolGroup h3{margin:0 0 8px;}
+.toolButtons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.toolButtons .btn,.toolButtons .chk{margin:0;width:100%;min-height:42px;justify-content:center;}
+.toolButtons .fullWidth{grid-column:1/-1;}
+#page-sched.period-only .scheduleTools,#page-sched.period-only #warnBox,#page-sched.period-only #gridWrap,#page-sched.period-only>.note{display:none;}
+#page-sched.period-only .cycleNav{margin-bottom:6px;}
 .btn,.chk{white-space:normal;overflow-wrap:anywhere;line-height:1.5;}
 .panel,.staffCard,.guideCards>*{min-width:0;overflow-wrap:anywhere;}
 input[type=text],input[type=number],input[type=date],select{font-size:max(16px,calc(16px * var(--text-scale)));font-family:inherit;}
@@ -294,17 +305,24 @@ table.mini input{width:calc(60px * var(--text-scale));}table.mini input.wide{wid
       <b id="cycleLabel" style="font-size:calc(13.5px * var(--text-scale, 1));"></b>
       <button class="btn small" id="cycleNext">次の4週間 ▶</button>
     </div>
-    <div class="row" role="group" aria-label="勤務表の出力">
-      <button class="btn small" id="btnXlsx">⬇ Excel</button>
-      <button class="btn small" id="btnPrint">🖨 印刷</button>
-      <button class="btn small" id="btnPrintCheck">✅ チェック印刷</button>
-    </div>
-    <div class="row">
-      <button class="btn primary" id="btnSolve">⚡ 自動生成</button>
-      <button class="btn" id="btnResolve" title="ロック・固定入力を守って作り直す">🎲 別案</button>
-      <span class="chk" id="chkArea">区表示</span>
-      <span class="chk" id="btnFit">🔍 全体</span>
-      <button class="btn small danger" id="btnClearCells">クリア</button>
+    <div class="scheduleTools">
+      <button class="btn primary" id="btnSolve">勤務表を自動生成</button>
+      <details id="scheduleMore">
+        <summary>表示・出力・その他の操作</summary>
+        <div class="toolGroup"><h3>勤務表の表示</h3><div class="toolButtons">
+          <button class="btn chk" id="chkArea">配達区を表示</button>
+          <button class="btn chk" id="btnFit">全体を表示</button>
+        </div></div>
+        <div class="toolGroup"><h3>保存・印刷</h3><div class="toolButtons">
+          <button class="btn" id="btnXlsx">Excel保存</button>
+          <button class="btn" id="btnPrint">印刷</button>
+          <button class="btn fullWidth" id="btnPrintCheck">チェック用に印刷</button>
+        </div></div>
+        <div class="toolGroup"><h3>作り直し</h3><div class="toolButtons">
+          <button class="btn" id="btnResolve" title="ロック・固定入力を守って作り直す">別案を生成</button>
+          <button class="btn danger" id="btnClearCells">勤務表をクリア</button>
+        </div></div>
+      </details>
     </div>
     <div id="warnBox"></div>
   </div>

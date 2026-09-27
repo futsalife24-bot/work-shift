@@ -2387,6 +2387,7 @@ function guideGo(step){
 }
 function renderGuide(){
   const box=$('#creationGuide');
+  $('#page-sched').classList.toggle('period-only',ui.guideStep===0);
   if(ui.guideStep==null){
     box.innerHTML='<h2>順番に答えて勤務表をつくる</h2><p class="note">登録済みの職場ルールを使って、28日間の勤務表を作成します。</p><button class="btn primary" id="startGuide">勤務表をつくる</button><details><summary>別の人に今の設定を渡すには</summary><p class="note">設定の「エクスポート」で書き出したJSONとアプリを渡し、相手の端末で「インポート」してください。JSONには社員情報・保存済み勤務表も含まれます。読み込み後は相手の端末内で編集・保存されます。</p></details>';
     $('#startGuide').onclick=()=>guideGo(0);return;
