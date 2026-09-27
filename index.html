@@ -285,9 +285,9 @@ table.mini input{width:calc(60px * var(--text-scale));}table.mini input.wide{wid
 <section id="page-sched" class="page active">
   <div class="panel">
     <div class="row">
-      <button class="btn small" id="cyclePrev">◀ 前</button>
+      <button class="btn small" id="cyclePrev">◀ 前の4週間</button>
       <b id="cycleLabel" style="font-size:calc(13.5px * var(--text-scale, 1));"></b>
-      <button class="btn small" id="cycleNext">次 ▶</button>
+      <button class="btn small" id="cycleNext">次の4週間 ▶</button>
       <span class="spacer" style="flex:1"></span>
       <button class="btn small" id="btnXlsx">⬇ Excel</button>
       <button class="btn small" id="btnPrint">🖨 印刷</button>
@@ -2829,8 +2829,8 @@ function renderGuide(){
   const cyc=getCycle(ui.curStart);
   const count=Object.values(cyc.fixed).reduce((n,r)=>n+Object.keys(r).length,0);
   const titles=['どの期間の勤務表を作りますか？','メンバーや担当できる勤務に変更はありますか？','休みの希望・決まっている勤務はありますか？','この内容で勤務表を作りますか？','人ごと・日ごとの両方を確認しましょう'];
-  const notes=['下の「前」「次」で対象期間を選んでください。','登録内容を確認し、変更がある人だけ編集してください。変更がなければ次へ進めます。','入力方法を人ごと／日ごとから選べます。途中で切り替えても入力は共通です。希望がなければそのまま次へ進めます。年休のおまかせ枠も下で確認できます。',`登録 ${state.staff.length}人・固定入力 ${count}件。下の「自動生成」を押してください。既存の必要人数・勤務ルール・年休枠で作成します。生成後は次へ進んでください。`,'警告と未入力を確認し、必要な箇所を修正してください。内務は自動チェックの対象外なので目視でも確認してください。出力は下のボタンから行えます。'];
-  box.innerHTML='<div class="guideSteps">'+labels.map((t,i)=>`<button class="btn small ${i===step?'primary':''}" data-step="${i}" ${i===step?'aria-current="step"':''}>${i+1}. ${t}</button>`).join('')+`</div><b>${esc(cycleLabel(ui.curStart))}</b><h2>${titles[step]}</h2><p class="note">${notes[step]}</p><div class="row"><button class="btn" id="guideBack" ${step===0?'disabled':''}>戻る</button><button class="btn primary" id="guideNext">${step===4?'ガイドを閉じる':'次へ'}</button>${step===4?'<button class="btn" id="guideExcel">Excel出力</button><button class="btn" id="guidePrint">印刷</button>':''}<button class="btn small" id="guideClose">通常画面へ</button></div>`;
+  const notes=['下の「前の4週間」「次の4週間」で期間を選び、「メンバー確認へ」で進んでください。','登録内容を確認し、変更がある人だけ編集してください。変更がなければ次へ進めます。','入力方法を人ごと／日ごとから選べます。途中で切り替えても入力は共通です。希望がなければそのまま次へ進めます。年休のおまかせ枠も下で確認できます。',`登録 ${state.staff.length}人・固定入力 ${count}件。下の「自動生成」を押してください。既存の必要人数・勤務ルール・年休枠で作成します。生成後は次へ進んでください。`,'警告と未入力を確認し、必要な箇所を修正してください。内務は自動チェックの対象外なので目視でも確認してください。出力は下のボタンから行えます。'];
+  box.innerHTML='<div class="guideSteps">'+labels.map((t,i)=>`<button class="btn small ${i===step?'primary':''}" data-step="${i}" ${i===step?'aria-current="step"':''}>${i+1}. ${t}</button>`).join('')+`</div><b>${esc(cycleLabel(ui.curStart))}</b><h2>${titles[step]}</h2><p class="note">${notes[step]}</p><div class="row"><button class="btn" id="guideBack" ${step===0?'disabled':''}>前の手順へ</button><button class="btn primary" id="guideNext">${['メンバー確認へ','希望入力へ','作成内容の確認へ','最終チェックへ','ガイドを閉じる'][step]}</button>${step===4?'<button class="btn" id="guideExcel">Excel出力</button><button class="btn" id="guidePrint">印刷</button>':''}<button class="btn small" id="guideClose">通常画面へ</button></div>`;
   box.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>guideGo(Number(b.dataset.step)));
   $('#guideBack').onclick=()=>guideGo(step-1);
   $('#guideNext').onclick=()=>{if(step===4){ui.guideStep=null;renderGuide();}else guideGo(step+1);};
