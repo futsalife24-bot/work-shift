@@ -102,6 +102,15 @@ function defaultAreas(){
   a.push({id:"am", name:"マンション区", midOK:false, mon:true, sat8:false});
   return a;
 }
+function ensureSupportSlot(){
+  if(state.settings.supportSlotAdded || !state.staff.length) return false;
+  if(!state.staff.some(s=>s.type==="sup")){
+    state.staff.push({id:uid(),name:"1-2",type:"sup",order:0,weekendOK:true,
+      sh8:false,sh9:false,smd:false,areasW:[],areasH:[],nightAreas:[],keiZan:0,nenZan:0});
+  }
+  state.settings.supportSlotAdded=true;
+  return true;
+}
 function migrateState(){
   let changed=false;
   // 旧デモ既定(1区〜12区)なら新しい区名一式へ置換(idは維持)
@@ -133,6 +142,7 @@ function migrateState(){
   // バックアップ督促用フィールド(A-2)
   if(state.settings.lastExport===undefined){ state.settings.lastExport=""; changed=true; }
   if(state.settings.lastChangeAt===undefined){ state.settings.lastChangeAt=""; changed=true; }
+  if(ensureSupportSlot()) changed=true;
   if(changed) save();
 }
 function defaultState(){
@@ -144,7 +154,7 @@ function defaultState(){
       codes:{ reg:{w8:"",w9:"3",mid:"1"}, con:{w8:"",w9:"12",mid:"8"} },
       summer:{from:"06-01",to:"09-30"}, winter:{from:"10-01",to:"03-31"},
       holidayOv:{},
-      lastExport:"", lastChangeAt:""
+      lastExport:"", lastChangeAt:"", supportSlotAdded:false
     },
     areas: defaultAreas(),
     staff: [],
@@ -193,8 +203,8 @@ function cellOf(cyc,sid,ds,make){
 }
 
 /* ---------------- 社員 ---------------- */
-const TYPE_LABEL={reg:"正社員",con:"期間雇用",ind:"内務"};
-const TYPE_RANK={reg:0,con:1,ind:2};
+const TYPE_LABEL={reg:"正社員",con:"期間雇用",sup:"応援（手入力）",ind:"内務"};
+const TYPE_RANK={reg:0,con:1,sup:2,ind:3};
 function sortedStaff(){
   return state.staff.slice().sort((a,b)=> (TYPE_RANK[a.type]-TYPE_RANK[b.type]) || (a.order-b.order));
 }
@@ -256,7 +266,7 @@ function buildCtx(start){
     areas: state.areas };
 }
 const isWork = c => c==="W8"||c==="W9"||c==="MD"||c==="TSU";
-const isOffAny = c => c==="OF"||c==="HOL"||c==="NEN"||c==="KEI"||c==="NAT"||c==="FUY";
+const isOffAny = c => c==="OF"||c==="HOL"||c==="NEN"||c==="KEI"||c==="NAT"||c==="FUY"||c==="KYU";
 
 /* ---------------- 二部マッチング (Hopcroft–Karp 簡易版) ---------------- */
 function maxMatching(adj, nRight){
@@ -427,7 +437,7 @@ function staffEval(ctx, g, s){
       const code=g[s][d];
       const inf=ctx.info[d];
       if(code==="OF") { offW++; offTotal++; }
-      if(inf.hol && code==="OF" && st.type!=="con"){
+      if(inf.hol && code==="OF" && st.type!=="con" && st.type!=="sup"){
         // 期間雇用は祝日に週休・非番(または年休)を置いて消化するのが実運用のため対象外。
         // 正社員・内務は祝日非出勤=「祝」が原則。
         cost+=CRITICAL; marks[d]="hard";
@@ -468,15 +478,16 @@ function staffEval(ctx, g, s){
     // 各週の週休・非番(OF)は1〜3日の範囲をハード制約とする(祝日が多い週は1日、その分
     // 隣の週で3日にする、という実運用に合わせた幅)。2日を目標にソフト評価で寄せる。
     // 祝日休み(HOL)や年休は別枠であり、ここには数えない。
-    if(offW<1 || offW>3){
+    const partialWeek=st.type==="sup" || g[s].slice(w*7,w*7+7).includes("KYU");
+    if(!partialWeek && (offW<1 || offW>3)){
       const over = offW<1 ? (1-offW) : (offW-3);
       cost += over*HARD;
       warns.push({lv:"hard", s, msg:`${st.name} 第${w+1}週の週休・非番が${offW}日です (許容: 1〜3日)`});
     }
-    cost += Math.abs(offW-2)*60;
+    if(!partialWeek) cost += Math.abs(offW-2)*60;
   }
   // 4週8休
-  if(offTotal!==8){
+  if(st.type!=="sup" && !g[s].includes("KYU") && offTotal!==8){
     cost += Math.abs(offTotal-8)*300;
     warns.push({lv: offTotal<8?"hard":"soft", s, msg:`${st.name} 休み${offTotal}日(基準8日)`});
   }
@@ -504,8 +515,9 @@ function fairEval(ctx, g){
     const mean=vals.reduce((a,b)=>a+b,0)/vals.length;
     return vals.reduce((a,v)=>a+Math.abs(v-mean),0)*w;
   };
-  const wkOK = ctx.del.map((s,i)=>s.weekendOK!==false?i:-1).filter(i=>i>=0);
-  const mdOK = ctx.del.map((s,i)=>s.smd?i:-1).filter(i=>i>=0);
+  const fairEligible=(s,i)=>s.type!=="sup" && !g[i].every(c=>c==="KYU");
+  const wkOK = ctx.del.map((s,i)=>fairEligible(s,i)&&s.weekendOK!==false?i:-1).filter(i=>i>=0);
+  const mdOK = ctx.del.map((s,i)=>fairEligible(s,i)&&s.smd?i:-1).filter(i=>i>=0);
   cost += dev(sunCnt, wkOK, 18);
   cost += dev(midCnt, mdOK, 14);
   return {cost, warns, sunCnt, midCnt};
@@ -540,6 +552,7 @@ function detectImpossible(ctx){
     const fixed=ctx.cyc.fixed[st.id] && ctx.cyc.fixed[st.id][ds];
     if(fixed) return fixed.code||"";
     const cell=ctx.cyc.cells[st.id] && ctx.cyc.cells[st.id][ds];
+    if(st.type==="sup" || cell?.code==="KYU") return cell?.code||"";
     if(cell && cell.locked) return cell.code||"";
     if(ctx.info[d].weekend && st.weekendOK===false) return ctx.info[d].hol?"HOL":"OF";
     return null;
@@ -632,6 +645,7 @@ function solve(start, opts){
       const fixed = cyc.fixed[st.id] && cyc.fixed[st.id][ds];
       const cell = cyc.cells[st.id] && cyc.cells[st.id][ds];
       if(fixed){ row[d]=fixed.code; lock[d]=true; }
+      else if(st.type==="sup" || cell?.code==="KYU"){ row[d]=cell?.code||""; lock[d]=true; }
       else if(cell && cell.locked && cell.code){ row[d]=cell.code; lock[d]=true; }
       else if(ctx.info[d].weekend && st.weekendOK===false){ row[d]=ctx.info[d].hol?"HOL":"OF"; lock[d]=true; }
     }
@@ -879,7 +893,7 @@ function applySolution(res){
     for(let d=0;d<28;d++){
       const ds=ctx.days[d];
       const cell=cellOf(cyc, st.id, ds, true);
-      if(!cell.locked){
+      if(!cell.locked && st.type!=="sup"){
         cell.code=g[s][d]||"";
         delete cell.area;
       }
@@ -905,7 +919,7 @@ function applySolution(res){
       const ai=m.pairL[li];
       const st=ctx.del[p.s];
       const cell=cellOf(cyc, st.id, ctx.days[d], true);
-      if(!cell.locked) cell.area = ai>=0 ? areaList[ai].id : null;
+      if(!cell.locked && ctx.del[p.s].type!=="sup") cell.area = ai>=0 ? areaList[ai].id : null;
     });
   }
   // 8時限定区(sat8)の担当割当: 5人体制の日(dtype==="sat")に、担当可能な8時勤務者を1人立てる
@@ -921,7 +935,7 @@ function applySolution(res){
           const st=ctx.del[s];
           if(!(st.areasH||[]).includes(area.id)) continue;
           const cell=cellOf(cyc, st.id, ctx.days[d], true);
-          if(cell.locked) continue;
+          if(cell.locked || st.type==="sup") continue;
           const c=asgCnt[st.id]||0;
           if(!best || c<best.c) best={sid:st.id, cell, c};
         }
@@ -968,6 +982,7 @@ function cellLabel(st, inf, cell, offMap){
     case "NAT": return {t:"夏", red:true};
     case "FUY": return {t:"冬", red:true};
     case "TSU": return {t:"通", red:false};
+    case "KYU": return {t:"休職", red:false};
     case "MD": return {t: st.type==="ind" ? "中" : "中"+(codes.mid||""), red:false};
     case "W9": return {t:"日"+(codes.w9||""), red:false};
     case "W8":
@@ -1195,6 +1210,7 @@ const PAL=[
   {code:"W8", t:"8時"},{code:"W9", t:"9時"},{code:"MD", t:"中勤"},
   {code:"OF", t:"休", red:true},{code:"HOL", t:"祝", red:true},{code:"NEN", t:"年", red:true},{code:"KEI", t:"計", red:true},
   {code:"NAT", t:"夏", red:true},{code:"FUY", t:"冬", red:true},{code:"TSU", t:"通"},
+  {code:"KYU", t:"休職"},
   {code:"", t:"消去"}
 ];
 function dayIndexInCycle(ds){ return Math.round((parseDate(ds)-parseDate(ui.curStart))/86400000); }
@@ -1232,6 +1248,12 @@ function selectCell(sid, ds){
     b.addEventListener("click",()=>{
       const c=cellOf(cyc,sid,ds,true);
       c.code=b.dataset.code;
+      if(c.code==="KYU"){
+        cyc.fixed[sid]=cyc.fixed[sid]||{};
+        cyc.fixed[sid][ds]={code:"KYU"};
+      }else if(cyc.fixed[sid]?.[ds]?.code==="KYU"){
+        delete cyc.fixed[sid][ds];
+      }
       if(!isWork(c.code)) delete c.area;
       save(); renderSched(); selectCell(sid,ds);
     });
@@ -1424,6 +1446,7 @@ function distributeNen(holidayMode){
   const orig=g.map(r=>r.slice());
   const movable=(s,d)=>{
     const st=ctx.del[s], ds=ctx.days[d];
+    if(st.type==="sup" || g[s][d]==="KYU") return false;
     if(cyc.fixed[st.id] && cyc.fixed[st.id][ds]) return false;
     const cell=cyc.cells[st.id] && cyc.cells[st.id][ds];
     return !(cell && cell.locked);
@@ -1508,7 +1531,7 @@ function distributeNen(holidayMode){
       pool.forEach((p,li)=>{
         const ai=m.pairL[li];
         const cell=cellOf(cyc,ctx.del[p.s].id,ctx.days[d],true);
-        if(!cell.locked) cell.area=ai>=0?areaList[ai].id:null;
+        if(!cell.locked && ctx.del[p.s].type!=="sup") cell.area=ai>=0?areaList[ai].id:null;
       });
     } else if(inf.dtype==="sat"){
       // 8時限定区の担当者が年休で外れた場合、別の8時勤務者へ付け替える
@@ -1522,7 +1545,7 @@ function distributeNen(holidayMode){
           const st=ctx.del[s];
           if(g[s][d]!=="W8" || !(st.areasH||[]).includes(area.id)) continue;
           const cell=cellOf(cyc,st.id,ctx.days[d],true);
-          if(cell.locked) continue;
+          if(cell.locked || ctx.del[s].type==="sup") continue;
           cell.area=area.id;
           break;
         }
@@ -1602,9 +1625,10 @@ $("#btnClearCells").addEventListener("click",()=>{
 /* ================================================================
    UI: 事前入力
 ================================================================ */
-const PRE_LABEL={ W8:"8時", W9:"9時", MD:"中勤", "":"", OF:"休", HOL:"祝", KEI:"計", NEN:"年", NAT:"夏", FUY:"冬", TSU:"通" };
+const PRE_LABEL={ W8:"8時", W9:"9時", MD:"中勤", "":"", OF:"休", HOL:"祝", KEI:"計", NEN:"年", NAT:"夏", FUY:"冬", TSU:"通", KYU:"休職" };
 // ペイント方式のコードパレット([消去]は空文字コード=強制クリア)
 const PRE_PAINT=[
+  {code:"KYU", t:"休職"},
   {code:"W8", t:"8時"},{code:"W9", t:"9時"},{code:"MD", t:"中勤"},
   {code:"OF", t:"休"},{code:"HOL", t:"祝"},{code:"KEI", t:"計"},{code:"NEN", t:"年"},
   {code:"NAT", t:"夏"},{code:"FUY", t:"冬"},{code:"TSU", t:"通"},
@@ -1757,7 +1781,7 @@ function renderQuota(){
     });
   }
   // 全員サマリ
-  const rows=deliveryStaff().map(s=>{
+  const rows=deliveryStaff().filter(s=>s.type!=="sup").map(s=>{
     const nen=countPlaced(s.id,["NEN"],fr), kei=countPlaced(s.id,["KEI"],fr);
     const nat=countPlaced(s.id,["NAT"],fr), fuy=countPlaced(s.id,["FUY"],fr);
     const rest=Math.max(0,(s.keiZan||0)-nen-kei);
@@ -1778,6 +1802,7 @@ function renderStaffList(){
   if(!all.length){ list.innerHTML='<p class="note">社員が未登録です。「+追加」または設定タブの「デモデータ投入」から始めてください。</p>'; return; }
   list.innerHTML=all.map(s=>{
     const meta=[];
+    if(s.type==="sup") meta.push("応援が来る日の勤務を手入力。適性・担当区はこの画面で設定");
     if(s.type!=="ind"){
       meta.push((s.weekendOK===false?"土日祝×":"土日祝○"));
       const sh=[]; if(s.sh8)sh.push("8時"); if(s.sh9||s.smd)sh.push("9時・中勤");
@@ -1810,6 +1835,7 @@ function editStaff(id){
       <select id="stType">
         <option value="reg" ${st.type==="reg"?"selected":""}>正社員</option>
         <option value="con" ${st.type==="con"?"selected":""}>期間雇用社員</option>
+        <option value="sup" ${st.type==="sup"?"selected":""}>応援（来る日の勤務を手入力）</option>
         <option value="ind" ${st.type==="ind"?"selected":""}>内務</option>
       </select></label>
     <div id="stDelOnly" style="${st.type==="ind"?"display:none":""}">
@@ -1895,6 +1921,7 @@ function editStaff(id){
     st.keiZan=Number($("#stKei").value)||0;
     st.nenZan=Number($("#stNen").value)||0;
     if(isNew) state.staff.push(st);
+    ensureSupportSlot();
     save(); closeModal(); renderStaffList();
   };
   const del=$("#stDel");
@@ -2033,7 +2060,7 @@ $("#importFile").addEventListener("change",e=>{
       if(!s.settings||!s.staff) throw new Error("形式が違います");
       if(!confirm("現在のデータは自動でバックアップされます。インポート内容で置き換えます。よろしいですか?")) return;
       autoBackup();
-      state=s; ui.undoSnap=null; save(); initCurCycle(); renderAll(); toast("インポートしました(旧データはバックアップ済み)");
+      state=s; migrateState(); ui.undoSnap=null; save(); initCurCycle(); renderAll(); toast("インポートしました(旧データはバックアップ済み)");
     }catch(err){ toast("読込失敗: "+err.message); }
   };
   r.readAsText(f);
@@ -2095,6 +2122,8 @@ function loadDemo(){
     if(s.smd) s.nightAreas=["sea","mountain"];
   });
   state.staff=staff;
+  state.settings.supportSlotAdded=false;
+  ensureSupportSlot();
   state.cycles={};
   state.settings.team="1-4班";
 }
@@ -2419,23 +2448,24 @@ function renderReview(){
   const sid=person?ui.reviewTarget:null, d=person?null:ctx.days.indexOf(ui.reviewTarget);
   const items=person?ctx.days.map(ds=>({sid,ds})):all.map(st=>({sid:st.id,ds:ui.reviewTarget}));
   const codes=items.map(x=>ctx.cyc.cells[x.sid]?.[x.ds]?.code||'');
-  const blank=codes.filter(c=>!c).length;
+  const blank=items.filter((x,i)=>!codes[i] && all.find(s=>s.id===x.sid)?.type!=="sup").length;
   const warnings=ev.warns.filter(w=>person?w.s===ctx.del.findIndex(s=>s.id===sid):w.d===d);
   const general=ev.warns.filter(w=>w.s==null&&w.d==null);
   const mismatch=items.filter(x=>{const f=ctx.cyc.fixed[x.sid]?.[x.ds], c=ctx.cyc.cells[x.sid]?.[x.ds];return f&&(f.code!==c?.code||(f.area&&f.area!==c?.area));});
-  let summary=person?`勤務 ${codes.filter(isWork).length}日 ／ 週休・非番 ${codes.filter(c=>c==='OF').length}日 ／ 年休等 ${codes.filter(c=>['NEN','KEI','NAT','FUY'].includes(c)).length}日 ／ 祝休 ${codes.filter(c=>c==='HOL').length}日`:`配達員の人数（実際／必要）：8時 ${g.filter(r=>r[d]==='W8').length}/${ctx.dem[d].h8}、9時 ${g.filter(r=>r[d]==='W9').length}/${ctx.dem[d].h9}、中勤 ${g.filter(r=>r[d]==='MD').length}/${ctx.dem[d].md}`;
+  let summary=person?`勤務 ${codes.filter(isWork).length}日 ／ 週休・非番 ${codes.filter(c=>c==='OF').length}日 ／ 年休等 ${codes.filter(c=>['NEN','KEI','NAT','FUY'].includes(c)).length}日 ／ 祝休 ${codes.filter(c=>c==='HOL').length}日 ／ 休職 ${codes.filter(c=>c==='KYU').length}日`:`配達員の人数（実際／必要）：8時 ${g.filter(r=>r[d]==='W8').length}/${ctx.dem[d].h8}、9時 ${g.filter(r=>r[d]==='W9').length}/${ctx.dem[d].h9}、中勤 ${g.filter(r=>r[d]==='MD').length}/${ctx.dem[d].md}`;
   body.innerHTML=`<p>${summary}</p><p>未入力 ${blank}件 ／ 希望・固定入力との不一致 ${mismatch.length}件</p><p class="note">${person?'日ごとの人数不足は「日ごと」でも確認してください。':'連勤・休日数は「人ごと」でも確認してください。'} ${!gridHasWork(g)?'勤務表は未生成または勤務未入力です。':''}</p>`;
   body.innerHTML+=warnings.length?'<ul>'+warnings.map(w=>`<li class="${w.lv==='hard'?'red':''}">${esc(w.msg)}</li>`).join('')+'</ul>':'<p class="note">この対象の自動チェック警告はありません（未入力や目視確認は別途必要です）。</p>';
   if(general.length) body.innerHTML+='<p>全体の注意：</p><ul>'+general.map(w=>`<li>${esc(w.msg)}</li>`).join('')+'</ul>';
   body.innerHTML+='<div class="guideCards">'+items.map(x=>{
     const st=all.find(s=>s.id===x.sid), c=ctx.cyc.cells[x.sid]?.[x.ds], f=ctx.cyc.fixed[x.sid]?.[x.ds];
-    const label=PRE_LABEL[c?.code]||c?.code||'未入力';
+    const label=PRE_LABEL[c?.code]||c?.code||(st.type==="sup"?'応援なし':'未入力');
     return `<button class="btn" data-sid="${esc(x.sid)}" data-ds="${x.ds}">${esc(person?mdLabel(x.ds)+'（'+DOW[dowOf(x.ds)]+'）':st.name)}：${esc(label)}${c?.area?' / '+esc(areaName(c.area)):''}${f?'〈固定：'+esc(PRE_LABEL[f.code]||f.code)+'〉':''}</button>`;
   }).join('')+'</div>';
   body.querySelectorAll('[data-sid]').forEach(b=>b.onclick=()=>{switchTab('sched');selectCell(b.dataset.sid,b.dataset.ds);});
 }
 
 function renderAll(){
+  if(ensureSupportSlot()) save();
   renderSched(); renderPre(); renderStaffList(); renderConf();
 }
 migrateState();
