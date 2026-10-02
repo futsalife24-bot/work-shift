@@ -1,0 +1,17 @@
+{
+  "url": "https://futsalife24-bot.github.io/work-shift/",
+  "base": "0d3500453aaf5835f6c9b38e6153a3adc54b21fd",
+  "applicationRelease": "78704f45692f1b803cb2db57a3fc0f62530d4c95",
+  "deploymentRun": 36983931530,
+  "deploymentConclusion": "success",
+  "httpStatus": 200,
+  "htmlMatchesRelease": true,
+  "guideSteps": 4,
+  "smallHeadingPx": 13.5,
+  "largeHeadingPx": 18.75,
+  "persistence": true,
+  "serviceWorkerCache": "kinmuhyo-v15",
+  "offlineStartup": true,
+  "javascriptErrors": [],
+  "originalUncommittedAnnualLeaveWork": "preserved; excluded from deployment"
+}
