@@ -112,3 +112,15 @@ base `c410dfb8fcef36cf7bf46ad8447b60f6e385442a`、専用branch `fix/fixed-lock-c
 実行環境はWindows、Node v24.19.0、Playwrightのheadless Edge。`NODE_PATH=C:/Users/futsa/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules`、`BROWSER_CHANNEL=msedge` を指定して `node test-fixed-lock-ui.cjs` を実行。ローカル生成済みindex.html・新規隔離context・架空fixtureのみを使用しHTTP(S)を遮断。確認画像は `C:/Users/futsa/AppData/Local/Temp/work-shift-f2-ui-20261007/f2-modal-320.png` と `f2-modal-390.png` に一時保存した（Gitへ同梱せず、同テストと `F2_SCREENSHOT_DIR` 指定で再生成可能）。終了時に専用contextとブラウザを閉じ、viewport変更も破棄。サーバーは起動せず、`UI-20261007-040 UI解放済み` を親担当へ報告した。成功済みの他試験は繰り返していない。
 
 実職員・実ユーザー保存を使用せず、main統合・Service Worker変更・公開は未実施。指定 `gpt-6-astra/high`、実設定の独立取得は未確認。MainVaultは親担当が記録する。
+
+## F1＋F2の公開（2026-10-07）
+
+本人の19:35の指示「承認系は全部承認扱いにして後で教えて」により、提示済みのF1＋F2候補 `8e8e84e4d38cb26ad0e7164c738cd2bc85218777` のmain統合・既存Pages公開が承認された。直前に最新main `d5959cec6b08978d8d4914c006477e2b02c641f8` と候補・差分・cleanを照合した。適用rules・必須checkはなく、[PR #1](https://github.com/futsalife24-bot/work-shift/pull/1) はCLEAN/MERGEABLE、head固定条件を付けて通常merge。保護・CI・Hook・Pages設定は変更せず、admin bypassは使用していない。
+
+統合SHA `4873616f3deb255d19d545b5aa7fffd9b74579c9`。[Pages実行37608691878](https://github.com/futsalife24-bot/work-shift/actions/runs/37608691878) 成功。公開先 https://futsalife24-bot.github.io/work-shift/ のHTML/SWを取得し、候補とLF正規化SHA256が一致した。HTML `bd1f5ca96b14db88c7354ca3fd522f6885e9a31e12ccfcad6ff92a611e0def88`、SW `649fca5e0bf45589ab37948d80c0bb930ea4a9b181716a710377c0de457d930f`、配信キャッシュ名v17。旧mainからの製品変更はF1の週休不能判定、F2の生成前矛盾通知、SWキャッシュ名の3点だけ。既検証のNode/F2画面/UI044によるローカルSW更新・オフライン・架空保存保持の成功証拠を再利用し、全件テストは繰り返していない。
+
+公開実ブラウザの局所確認も貸出 `UI-20261007-058` で完了。`test-release-live.cjs` 1本を新規隔離Edgeの390pxで実行し、公開v17のSW制御、架空F2矛盾通知と両値/保存保持、実パレットOF修正後の生成、実offline再読込と勤務保存JSON/state/文字サイズ「大」の保持を確認した。JavaScriptエラー0。最初はsandboxの公開URL初回移動が `ERR_NETWORK_ACCESS_DENIED` で終了したため、同じテストを許可された外部通信可能環境で再実行して合格。コード修正や制約迂回はしていない。
+
+実行設定は既存のNode/Playwright環境、`BROWSER_CHANNEL=msedge`、`WORK_SHIFT_UI_LEASE=UI-20261007-058`。専用browser/context/tabを終了し、viewport変更を破棄。サーバーは起動せず、UI058解放を親担当へ報告した。公開版での既存利用者の更新経路や実スマホ性能を保証する検証ではなく、新規隔離contextの公開配信と局所動作確認。旧v16→v17の更新経路は先行のUI044ローカル検証を再利用している。
+
+今回の公開に実職員情報・既存利用者の保存データは使用していない。元cloneと既存分析/fix branchは保持。公開後の記録差分はこの文書・候補資料・検証スクリプトだけで、製品HTML/JS/SWは統合SHA `4873616f3deb255d19d545b5aa7fffd9b74579c9` から不変。詳細は [公開候補資料](RELEASE_CANDIDATE_F1_F2.md)。指定 `gpt-6-astra/high`、実設定は未確認。MainVault記録は親担当。
