@@ -1,0 +1,284 @@
+{
+  "base": "c410dfb8fcef36cf7bf46ad8447b60f6e385442a",
+  "source_sha256_lf": "2835036abacb3b860aebd9333f731253e772a219990192fd8b7a6b679f600277",
+  "patch_sha256_lf": "1f7511e770ebb74b38da262ec150e6ba4ea403a9c46be442829803b98053c0ce",
+  "scope": "4条件×現行/未適用案。実runSolveは各60000反復を要求、全探索変数は固定済み。最大2探索/回・VM実行15秒上限。DOM代替の文字列観測でブラウザ未使用。",
+  "results": [
+    {
+      "kind": "consistent",
+      "patched": false,
+      "target": {
+        "sid": "A",
+        "ds": "2026-06-20"
+      },
+      "before_code": "OF",
+      "fixed_code": "OF",
+      "requested_iterations": [
+        60000
+      ],
+      "solved_code": "OF",
+      "before_hard": [],
+      "solve_hard": [],
+      "written_code": "OF",
+      "written_hard": [],
+      "mismatch": 0,
+      "toast": [
+        "生成しました",
+        "元に戻す"
+      ],
+      "modal": "",
+      "review_html": "<p>勤務 20日 ／ 週休・非番 8日 ／ 年休等 0日 ／ 祝休 0日 ／ 休職 0日</p><p>未入力 0件 ／ 希望・固定入力との不一致 0件</p><p class=\"note\">日ごとの人数不足は「日ごと」でも確認してください。 </p><ul><li class=\"\">架空A 6/19 6連勤</li></ul><div class=\"guideCards\"><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-14\">6/14（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-15\">6/15（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-16\">6/16（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-17\">6/17（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-18\">6/18（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-19\">6/19（金）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-20\">6/20（土）：休〈固定：休〉</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-21\">6/21（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-22\">6/22（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-23\">6/23（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-24\">6/24（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-25\">6/25（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-26\">6/26（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-27\">6/27（土）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-28\">6/28（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-29\">6/29（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-30\">6/30（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-01\">7/1（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-02\">7/2（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-03\">7/3（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-04\">7/4（土）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-05\">7/5（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-06\">7/6（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-07\">7/7（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-08\">7/8（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-09\">7/9（木）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-10\">7/10（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-11\">7/11（土）：休</button></div>",
+      "apply_calls": 1,
+      "save_writes": 1,
+      "saved_reloaded_equal": true,
+      "unchanged": true
+    },
+    {
+      "kind": "consistent",
+      "patched": true,
+      "target": {
+        "sid": "A",
+        "ds": "2026-06-20"
+      },
+      "before_code": "OF",
+      "fixed_code": "OF",
+      "requested_iterations": [
+        60000
+      ],
+      "solved_code": "OF",
+      "before_hard": [],
+      "solve_hard": [],
+      "written_code": "OF",
+      "written_hard": [],
+      "mismatch": 0,
+      "toast": [
+        "生成しました",
+        "元に戻す"
+      ],
+      "modal": "",
+      "review_html": "<p>勤務 20日 ／ 週休・非番 8日 ／ 年休等 0日 ／ 祝休 0日 ／ 休職 0日</p><p>未入力 0件 ／ 希望・固定入力との不一致 0件</p><p class=\"note\">日ごとの人数不足は「日ごと」でも確認してください。 </p><ul><li class=\"\">架空A 6/19 6連勤</li></ul><div class=\"guideCards\"><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-14\">6/14（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-15\">6/15（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-16\">6/16（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-17\">6/17（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-18\">6/18（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-19\">6/19（金）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-20\">6/20（土）：休〈固定：休〉</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-21\">6/21（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-22\">6/22（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-23\">6/23（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-24\">6/24（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-25\">6/25（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-26\">6/26（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-27\">6/27（土）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-28\">6/28（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-29\">6/29（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-30\">6/30（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-01\">7/1（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-02\">7/2（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-03\">7/3（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-04\">7/4（土）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-05\">7/5（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-06\">7/6（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-07\">7/7（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-08\">7/8（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-09\">7/9（木）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-10\">7/10（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-11\">7/11（土）：休</button></div>",
+      "apply_calls": 1,
+      "save_writes": 1,
+      "saved_reloaded_equal": true,
+      "unchanged": true
+    },
+    {
+      "kind": "unlocked-stale",
+      "patched": false,
+      "target": {
+        "sid": "A",
+        "ds": "2026-06-20"
+      },
+      "before_code": "W8",
+      "fixed_code": "OF",
+      "requested_iterations": [
+        60000
+      ],
+      "solved_code": "OF",
+      "before_hard": [
+        "架空A 6/20 7連勤(上限6)",
+        "架空A 第1週の週休・非番が0日です (許容: 1〜3日)",
+        "架空A 6/21 8連勤(上限6)",
+        "架空A 6/22 9連勤(上限6)",
+        "架空A 6/23 10連勤(上限6)",
+        "架空A 6/24 11連勤(上限6)",
+        "架空A 6/25 12連勤(上限6)",
+        "架空A 休み7日(基準8日)"
+      ],
+      "solve_hard": [],
+      "written_code": "OF",
+      "written_hard": [],
+      "mismatch": 0,
+      "toast": [
+        "生成しました",
+        "元に戻す"
+      ],
+      "modal": "",
+      "review_html": "<p>勤務 20日 ／ 週休・非番 8日 ／ 年休等 0日 ／ 祝休 0日 ／ 休職 0日</p><p>未入力 0件 ／ 希望・固定入力との不一致 0件</p><p class=\"note\">日ごとの人数不足は「日ごと」でも確認してください。 </p><ul><li class=\"\">架空A 6/19 6連勤</li></ul><div class=\"guideCards\"><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-14\">6/14（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-15\">6/15（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-16\">6/16（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-17\">6/17（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-18\">6/18（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-19\">6/19（金）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-20\">6/20（土）：休〈固定：休〉</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-21\">6/21（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-22\">6/22（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-23\">6/23（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-24\">6/24（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-25\">6/25（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-26\">6/26（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-27\">6/27（土）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-28\">6/28（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-29\">6/29（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-30\">6/30（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-01\">7/1（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-02\">7/2（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-03\">7/3（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-04\">7/4（土）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-05\">7/5（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-06\">7/6（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-07\">7/7（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-08\">7/8（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-09\">7/9（木）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-10\">7/10（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-11\">7/11（土）：休</button></div>",
+      "apply_calls": 1,
+      "save_writes": 1,
+      "saved_reloaded_equal": true,
+      "unchanged": false
+    },
+    {
+      "kind": "unlocked-stale",
+      "patched": true,
+      "target": {
+        "sid": "A",
+        "ds": "2026-06-20"
+      },
+      "before_code": "W8",
+      "fixed_code": "OF",
+      "requested_iterations": [
+        60000
+      ],
+      "solved_code": "OF",
+      "before_hard": [
+        "架空A 6/20 7連勤(上限6)",
+        "架空A 第1週の週休・非番が0日です (許容: 1〜3日)",
+        "架空A 6/21 8連勤(上限6)",
+        "架空A 6/22 9連勤(上限6)",
+        "架空A 6/23 10連勤(上限6)",
+        "架空A 6/24 11連勤(上限6)",
+        "架空A 6/25 12連勤(上限6)",
+        "架空A 休み7日(基準8日)"
+      ],
+      "solve_hard": [],
+      "written_code": "OF",
+      "written_hard": [],
+      "mismatch": 0,
+      "toast": [
+        "生成しました",
+        "元に戻す"
+      ],
+      "modal": "",
+      "review_html": "<p>勤務 20日 ／ 週休・非番 8日 ／ 年休等 0日 ／ 祝休 0日 ／ 休職 0日</p><p>未入力 0件 ／ 希望・固定入力との不一致 0件</p><p class=\"note\">日ごとの人数不足は「日ごと」でも確認してください。 </p><ul><li class=\"\">架空A 6/19 6連勤</li></ul><div class=\"guideCards\"><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-14\">6/14（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-15\">6/15（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-16\">6/16（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-17\">6/17（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-18\">6/18（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-19\">6/19（金）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-20\">6/20（土）：休〈固定：休〉</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-21\">6/21（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-22\">6/22（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-23\">6/23（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-24\">6/24（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-25\">6/25（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-26\">6/26（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-27\">6/27（土）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-28\">6/28（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-29\">6/29（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-30\">6/30（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-01\">7/1（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-02\">7/2（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-03\">7/3（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-04\">7/4（土）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-05\">7/5（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-06\">7/6（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-07\">7/7（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-08\">7/8（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-09\">7/9（木）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-10\">7/10（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-11\">7/11（土）：休</button></div>",
+      "apply_calls": 1,
+      "save_writes": 1,
+      "saved_reloaded_equal": true,
+      "unchanged": false
+    },
+    {
+      "kind": "locked-hard",
+      "patched": false,
+      "target": {
+        "sid": "A",
+        "ds": "2026-06-20"
+      },
+      "before_code": "W8",
+      "fixed_code": "OF",
+      "requested_iterations": [
+        60000
+      ],
+      "solved_code": "OF",
+      "before_hard": [
+        "架空A 6/20 7連勤(上限6)",
+        "架空A 第1週の週休・非番が0日です (許容: 1〜3日)",
+        "架空A 6/21 8連勤(上限6)",
+        "架空A 6/22 9連勤(上限6)",
+        "架空A 6/23 10連勤(上限6)",
+        "架空A 6/24 11連勤(上限6)",
+        "架空A 6/25 12連勤(上限6)",
+        "架空A 休み7日(基準8日)"
+      ],
+      "solve_hard": [],
+      "written_code": "W8",
+      "written_hard": [
+        "架空A 6/20 7連勤(上限6)",
+        "架空A 第1週の週休・非番が0日です (許容: 1〜3日)",
+        "架空A 6/21 8連勤(上限6)",
+        "架空A 6/22 9連勤(上限6)",
+        "架空A 6/23 10連勤(上限6)",
+        "架空A 6/24 11連勤(上限6)",
+        "架空A 6/25 12連勤(上限6)",
+        "架空A 休み7日(基準8日)"
+      ],
+      "mismatch": 1,
+      "toast": [
+        "生成しました",
+        "元に戻す"
+      ],
+      "modal": "",
+      "review_html": "<p>勤務 21日 ／ 週休・非番 7日 ／ 年休等 0日 ／ 祝休 0日 ／ 休職 0日</p><p>未入力 0件 ／ 希望・固定入力との不一致 1件</p><p class=\"note\">日ごとの人数不足は「日ごと」でも確認してください。 </p><ul><li class=\"\">架空A 6/19 6連勤</li><li class=\"red\">架空A 6/20 7連勤(上限6)</li><li class=\"red\">架空A 第1週の週休・非番が0日です (許容: 1〜3日)</li><li class=\"red\">架空A 6/21 8連勤(上限6)</li><li class=\"red\">架空A 6/22 9連勤(上限6)</li><li class=\"red\">架空A 6/23 10連勤(上限6)</li><li class=\"red\">架空A 6/24 11連勤(上限6)</li><li class=\"red\">架空A 6/25 12連勤(上限6)</li><li class=\"red\">架空A 休み7日(基準8日)</li></ul><div class=\"guideCards\"><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-14\">6/14（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-15\">6/15（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-16\">6/16（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-17\">6/17（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-18\">6/18（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-19\">6/19（金）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-20\">6/20（土）：8時〈固定：休〉</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-21\">6/21（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-22\">6/22（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-23\">6/23（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-24\">6/24（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-25\">6/25（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-26\">6/26（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-27\">6/27（土）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-28\">6/28（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-29\">6/29（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-30\">6/30（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-01\">7/1（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-02\">7/2（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-03\">7/3（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-04\">7/4（土）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-05\">7/5（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-06\">7/6（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-07\">7/7（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-08\">7/8（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-09\">7/9（木）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-10\">7/10（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-11\">7/11（土）：休</button></div>",
+      "apply_calls": 1,
+      "save_writes": 1,
+      "saved_reloaded_equal": true,
+      "unchanged": true
+    },
+    {
+      "kind": "locked-hard",
+      "patched": true,
+      "target": {
+        "sid": "A",
+        "ds": "2026-06-20"
+      },
+      "before_code": "W8",
+      "fixed_code": "OF",
+      "requested_iterations": [],
+      "solved_code": null,
+      "before_hard": [
+        "架空A 6/20 7連勤(上限6)",
+        "架空A 第1週の週休・非番が0日です (許容: 1〜3日)",
+        "架空A 6/21 8連勤(上限6)",
+        "架空A 6/22 9連勤(上限6)",
+        "架空A 6/23 10連勤(上限6)",
+        "架空A 6/24 11連勤(上限6)",
+        "架空A 6/25 12連勤(上限6)",
+        "架空A 休み7日(基準8日)"
+      ],
+      "solve_hard": null,
+      "written_code": "W8",
+      "written_hard": [
+        "架空A 6/20 7連勤(上限6)",
+        "架空A 第1週の週休・非番が0日です (許容: 1〜3日)",
+        "架空A 6/21 8連勤(上限6)",
+        "架空A 6/22 9連勤(上限6)",
+        "架空A 6/23 10連勤(上限6)",
+        "架空A 6/24 11連勤(上限6)",
+        "架空A 6/25 12連勤(上限6)",
+        "架空A 休み7日(基準8日)"
+      ],
+      "mismatch": 1,
+      "toast": [],
+      "modal": "<h2>固定入力とロックが一致していません</h2>\n      <p>1件の矛盾があるため生成していません。希望入力とロックしたセルを確認し、入力を揃えてから再度生成してください。</p>\n      <ul><li>架空A 6/20：固定 休 ／ ロック 8時</li></ul>\n      <div class=\"row\" style=\"margin-top:14px;\"><button class=\"btn primary\" id=\"solveResultClose\">確認</button></div>",
+      "review_html": "<p>勤務 21日 ／ 週休・非番 7日 ／ 年休等 0日 ／ 祝休 0日 ／ 休職 0日</p><p>未入力 0件 ／ 希望・固定入力との不一致 1件</p><p class=\"note\">日ごとの人数不足は「日ごと」でも確認してください。 </p><ul><li class=\"\">架空A 6/19 6連勤</li><li class=\"red\">架空A 6/20 7連勤(上限6)</li><li class=\"red\">架空A 第1週の週休・非番が0日です (許容: 1〜3日)</li><li class=\"red\">架空A 6/21 8連勤(上限6)</li><li class=\"red\">架空A 6/22 9連勤(上限6)</li><li class=\"red\">架空A 6/23 10連勤(上限6)</li><li class=\"red\">架空A 6/24 11連勤(上限6)</li><li class=\"red\">架空A 6/25 12連勤(上限6)</li><li class=\"red\">架空A 休み7日(基準8日)</li></ul><div class=\"guideCards\"><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-14\">6/14（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-15\">6/15（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-16\">6/16（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-17\">6/17（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-18\">6/18（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-19\">6/19（金）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-20\">6/20（土）：8時〈固定：休〉</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-21\">6/21（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-22\">6/22（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-23\">6/23（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-24\">6/24（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-25\">6/25（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-26\">6/26（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-27\">6/27（土）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-28\">6/28（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-29\">6/29（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-30\">6/30（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-01\">7/1（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-02\">7/2（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-03\">7/3（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-04\">7/4（土）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-05\">7/5（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-06\">7/6（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-07\">7/7（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-08\">7/8（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-09\">7/9（木）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-10\">7/10（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-11\">7/11（土）：休</button></div>",
+      "apply_calls": 0,
+      "save_writes": 0,
+      "saved_reloaded_equal": true,
+      "unchanged": true
+    },
+    {
+      "kind": "locked-no-hard",
+      "patched": false,
+      "target": {
+        "sid": "A",
+        "ds": "2026-06-14"
+      },
+      "before_code": "NEN",
+      "fixed_code": "W8",
+      "requested_iterations": [
+        60000
+      ],
+      "solved_code": "W8",
+      "before_hard": [],
+      "solve_hard": [],
+      "written_code": "NEN",
+      "written_hard": [],
+      "mismatch": 1,
+      "toast": [
+        "生成しました",
+        "元に戻す"
+      ],
+      "modal": "",
+      "review_html": "<p>勤務 19日 ／ 週休・非番 8日 ／ 年休等 1日 ／ 祝休 0日 ／ 休職 0日</p><p>未入力 0件 ／ 希望・固定入力との不一致 1件</p><p class=\"note\">日ごとの人数不足は「日ごと」でも確認してください。 </p><p class=\"note\">この対象の自動チェック警告はありません（未入力や目視確認は別途必要です）。</p><div class=\"guideCards\"><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-14\">6/14（日）：年〈固定：8時〉</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-15\">6/15（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-16\">6/16（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-17\">6/17（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-18\">6/18（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-19\">6/19（金）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-20\">6/20（土）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-21\">6/21（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-22\">6/22（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-23\">6/23（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-24\">6/24（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-25\">6/25（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-26\">6/26（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-27\">6/27（土）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-28\">6/28（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-29\">6/29（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-30\">6/30（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-01\">7/1（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-02\">7/2（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-03\">7/3（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-04\">7/4（土）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-05\">7/5（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-06\">7/6（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-07\">7/7（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-08\">7/8（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-09\">7/9（木）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-10\">7/10（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-11\">7/11（土）：休</button></div>",
+      "apply_calls": 1,
+      "save_writes": 1,
+      "saved_reloaded_equal": true,
+      "unchanged": true
+    },
+    {
+      "kind": "locked-no-hard",
+      "patched": true,
+      "target": {
+        "sid": "A",
+        "ds": "2026-06-14"
+      },
+      "before_code": "NEN",
+      "fixed_code": "W8",
+      "requested_iterations": [],
+      "solved_code": null,
+      "before_hard": [],
+      "solve_hard": null,
+      "written_code": "NEN",
+      "written_hard": [],
+      "mismatch": 1,
+      "toast": [],
+      "modal": "<h2>固定入力とロックが一致していません</h2>\n      <p>1件の矛盾があるため生成していません。希望入力とロックしたセルを確認し、入力を揃えてから再度生成してください。</p>\n      <ul><li>架空A 6/14：固定 8時 ／ ロック 年</li></ul>\n      <div class=\"row\" style=\"margin-top:14px;\"><button class=\"btn primary\" id=\"solveResultClose\">確認</button></div>",
+      "review_html": "<p>勤務 19日 ／ 週休・非番 8日 ／ 年休等 1日 ／ 祝休 0日 ／ 休職 0日</p><p>未入力 0件 ／ 希望・固定入力との不一致 1件</p><p class=\"note\">日ごとの人数不足は「日ごと」でも確認してください。 </p><p class=\"note\">この対象の自動チェック警告はありません（未入力や目視確認は別途必要です）。</p><div class=\"guideCards\"><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-14\">6/14（日）：年〈固定：8時〉</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-15\">6/15（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-16\">6/16（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-17\">6/17（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-18\">6/18（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-19\">6/19（金）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-20\">6/20（土）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-21\">6/21（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-22\">6/22（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-23\">6/23（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-24\">6/24（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-25\">6/25（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-26\">6/26（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-27\">6/27（土）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-28\">6/28（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-29\">6/29（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-06-30\">6/30（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-01\">7/1（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-02\">7/2（木）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-03\">7/3（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-04\">7/4（土）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-05\">7/5（日）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-06\">7/6（月）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-07\">7/7（火）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-08\">7/8（水）：8時</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-09\">7/9（木）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-10\">7/10（金）：休</button><button class=\"btn\" data-sid=\"A\" data-ds=\"2026-07-11\">7/11（土）：休</button></div>",
+      "apply_calls": 0,
+      "save_writes": 0,
+      "saved_reloaded_equal": true,
+      "unchanged": true
+    }
+  ]
+}

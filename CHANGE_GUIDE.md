@@ -78,3 +78,9 @@ base `d5959cec6b08978d8d4914c006477e2b02c641f8`。分析コミット [025f4b9](h
 分析F2（固定入力と手動ロックの優先順位差）は未修正。成功トースト・書戻し処理にも変更を加えていない。main統合、Service Workerの更新、Pages公開、実ユーザーのデータや設定変更は未実施。
 
 専用ブランチ: `fix/impossible-weekly-exemptions-20261007`。GitHub: https://github.com/futsalife24-bot/work-shift 。ローカル: `C:/Users/futsa/Documents/Codex/2026-10-06/4-pro20x-hub/work-shift-analysis`。元mainと分析ブランチの成果は保持。指定モデル`gpt-6-astra/high`、実行設定の独立取得は未確認。MainVaultの記録は親担当へ引き継ぐ。
+
+## 固定希望と手動ロックのF2調査（2026-10-07、案のみ・未適用）
+
+base `c410dfb8fcef36cf7bf46ad8447b60f6e385442a`、branch `analysis/fixed-lock-result-20261007`。F1の製品差分と成功試験を保持し、架空4条件×現行／未適用案をNodeの隔離VMで比較した。実runSolve・solve・applySolution・evaluate・save/loadState・結果表示文の生成をつなげ、希望OF／ロックW8では探索に赤警告0件でも実セルに8件と固定不一致1件が残り「生成しました」、固定W8／ロックNENでは実セルの赤警告0件でも固定不一致1件を残して同じ成功表示を出すことを再現した。
+
+優先順位は既存文書で未規定。勤務コードの矛盾を生成前に検知して止める17行の未適用patch案を、`analysis/fixed-lock-result/` に再現コード・結果・限界と保存。案の矛盾2条件は探索／書戻し／保存0回、全state・保存JSON・undoを維持。正常対照と未ロックの古い値は現行と同じ結果。4条件の保存復元・出力再現、構文、patchのcheckを確認。UI・実データ・通常探索品質は未検証。製品適用・優先順位の決定・main統合・公開は行わない。指定 `gpt-6-astra/high`、実設定は未確認。MainVault記録は親担当。
