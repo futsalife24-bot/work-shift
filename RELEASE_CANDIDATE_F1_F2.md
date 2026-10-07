@@ -1,6 +1,8 @@
 # 勤務表 F1＋F2：公開判断用の候補（2026-10-07）
 
-**公開すると、応援・休職に不要な「週休不能」理由を出さなくなり、固定希望と手動ロックの勤務コードが矛盾する場合は、両値を残して生成前に知らせる。** キャッシュをv17へ更新する。公開・main統合は未承認で、この資料と専用branchの保存までを実施した。
+**F1＋F2は2026-10-07にmainへ統合・公開済み。** 本人の同日19:35の承認に基づき、[PR #1](https://github.com/futsalife24-bot/work-shift/pull/1) を通常mergeした。統合SHAは `4873616f3deb255d19d545b5aa7fffd9b74579c9`、[Pages実行37608691878](https://github.com/futsalife24-bot/work-shift/actions/runs/37608691878) は成功。公開HTML・SWは末尾の候補ハッシュと一致し、v17を配信している。以下の「公開前」「未実施」は候補作成時の履歴で、今回の公開完了記録を優先する。
+
+応援・休職に不要な「週休不能」理由を出さなくなり、固定希望と手動ロックの勤務コードが矛盾する場合は、両値を残して生成前に知らせる。公開版の実ブラウザ局所確認も `UI-20261007-058` で合格。390pxの新規隔離Edgeでv17制御、F2通知と両値・架空保存の保持、実パレットからOFへ修正後の生成、オフライン再読込と保存JSON/state/文字サイズ「大」の保持を確認し、JavaScriptエラー0。実ユーザーの保存データは操作していない。専用ブラウザ・context・tabを終了しviewportを破棄、UI058返却済み。再現資材は `test-release-live.cjs`。
 
 - 公開先：[勤務表ツール](https://futsalife24-bot.github.io/work-shift/)
 - GitHub：[work-shift](https://github.com/futsalife24-bot/work-shift)
