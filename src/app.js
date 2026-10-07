@@ -599,13 +599,17 @@ function detectImpossible(ctx){
   }
   for(let s=0;s<ctx.del.length;s++){
     const stImp=ctx.del[s];
+    if(stImp.type==="sup") continue;
     for(let w=0;w<4;w++){
+      const weekForced=Array.from({length:7},(_,i)=>forcedAt(s,w*7+i));
+      // staffEvalと同じく、休職を含む週は週休・非番の基準を判定しない。
+      if(weekForced.includes("KYU")) continue;
       let possible=0;
       for(let i=0;i<7;i++){
         const d=w*7+i;
         // 期間雇用は祝日にも週休・非番を置けるため、祝日を除外しない
         if(ctx.info[d].hol && stImp.type!=="con") continue;
-        const forced=forcedAt(s,d);
+        const forced=weekForced[i];
         if(forced===null || forced==="OF") possible++;
       }
       if(possible<1) reasons.push(`${stImp.name} 第${w+1}週に週休・非番を置ける日がありません`);
@@ -1559,6 +1563,23 @@ function distributeNen(holidayMode){
 
 function runSolve(){
   const cyc0=getCycle(ui.curStart);
+  const conflicts=[];
+  for(const st of sortedStaff()) for(let d=0;d<28;d++){
+    const ds=addDays(ui.curStart,d), f=cyc0.fixed[st.id]?.[ds], c=cyc0.cells[st.id]?.[ds];
+    if(f && c?.locked && f.code!==c.code){
+      const label=code=>PRE_LABEL[code]||code||"空欄";
+      conflicts.push(`${st.name} ${mdLabel(ds)}：固定 ${label(f.code)} ／ ロック ${label(c.code)}`);
+    }
+  }
+  if(conflicts.length){
+    openModal(`<h2>固定入力とロックが一致していません</h2>
+      <p>${conflicts.length}件の矛盾があるため生成していません。希望入力とロックしたセルを確認し、入力を揃えてから再度生成してください。</p>
+      <ul>${conflicts.slice(0,12).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>${conflicts.length>12?`<p>先頭12件を表示しています。ほか${conflicts.length-12}件あります。</p>`:""}
+      <div class="row" style="margin-top:14px;"><button class="btn primary" id="solveResultClose">確認</button></div>`);
+    $("#solveResultClose").onclick=closeModal;
+    return;
+  }
+
   ui.undoSnap = { start: ui.curStart, cells: structuredClone(cyc0.cells) };
   $("#solveOverlay").classList.add("open");
   $("#solveMsg").textContent="生成中…(数秒かかります)";

@@ -64,3 +64,51 @@ base `02873613fe8c4f48e1f075a994c8781db743976d`。src/app.js と生成物index.h
 登録済み社員がいる端末では起動／旧データインポート時に「1-2」（応援・手入力）を外務の末尾、内務の直前へ1件追加。既存社員・サイクルは保持し、再起動で増殖しない。追加済みフラグはsettings.supportSlotAdded。応援は来る日の勤務だけ入力し、自動生成は空欄を含め入力内容を保持。入力された勤務は日別人数に算入する。適性・担当区は未設定なので社員タブで設定する。応援の4週8休・年休枠は自動適用しない。
 休職コードKYUは希望入力（人／日）とセルパレットで選択可能。勤務人数・週休・年休には算入せず、生成・年休自動配置で保持。パレット入力も固定入力へ反映し、別コードへの変更で休職固定を解除。休職を含む週の週休日数、休職を含むサイクルの4週8休の基準は自動判定対象外とし、連勤・中勤翌日・勤務適性等は確認を続ける。印刷・Excel・最終チェックに「休職」を表示。休職はその日付のみ適用され、翌サイクルへ自動継承しない。
 test-support-absence.cjs にて旧データ保持、枠の位置・重複防止、両入力方法、生成後の休職・手入力応援・担当区保持、休職28日の不要な休日警告なし、印刷・Excel・最終チェック、保存復元、未ロック休職、解除を確認。既存入力・生成・保存・出力テストも合格。Service Workerをv16へ更新。
+
+## 応援・休職の解消不能判定を整合（2026-10-07、未公開）
+
+base `d5959cec6b08978d8d4914c006477e2b02c641f8`。分析コミット [025f4b9](https://github.com/futsalife24-bot/work-shift/commit/025f4b92c82d5a17070ce40a05c875d82a9a7f0e) のF1だけを修正。
+
+`detectImpossible`の週休・非番候補判定から応援を除外し、休職を1日でも含む週を除外する。通常の警告を評価する`staffEval`の既存条件と一致させた。休職は既存の`forcedAt`で取得し、固定入力、休職セル、ロックの現在の優先順位を維持する。週全体の休職も部分休職も同じ例外で、休職のない別の週は判定を続ける。年休を同じ例外にはしない。
+
+`test-impossible-exemptions.cjs`は実アプリのロジックをNode VMへ読み込み、応援、28日休職、1週全体の休職、1日だけ休職、未ロック休職、古い休職セルより勤務固定を優先、期間雇用・正社員の全日勤務、年休、週休確保の10ケースを照合する。応援・28日休職の不要な週休不能理由は各4件から0件。通常評価との一致、通常社員の正当な理由、日別人数不足の保持を確認した。修正前には応援の不要な理由4件で同テストが失敗することも確認。
+
+検証: `node test-impossible-exemptions.cjs`、`node --check src/app.js`、`node --check test-impossible-exemptions.cjs`、`node build.cjs`、`git diff --check`。生成した`index.html`の変更は同じ判定差分のみ。検証はブラウザ・GPU・実データ・外部通信を使用せず実施した。今回は純粋な判定の局所修正であり、UI・保存形式・ソルバー・印刷・Excelの変更がないため、既存のブラウザ全件テストは繰り返していない。
+
+分析F2（固定入力と手動ロックの優先順位差）は未修正。成功トースト・書戻し処理にも変更を加えていない。main統合、Service Workerの更新、Pages公開、実ユーザーのデータや設定変更は未実施。
+
+専用ブランチ: `fix/impossible-weekly-exemptions-20261007`。GitHub: https://github.com/futsalife24-bot/work-shift 。ローカル: `C:/Users/futsa/Documents/Codex/2026-10-06/4-pro20x-hub/work-shift-analysis`。元mainと分析ブランチの成果は保持。指定モデル`gpt-6-astra/high`、実行設定の独立取得は未確認。MainVaultの記録は親担当へ引き継ぐ。
+
+## 固定希望とロックの矛盾を生成前に通知（2026-10-07、未公開）
+
+base `c410dfb8fcef36cf7bf46ad8447b60f6e385442a`、専用branch `fix/fixed-lock-conflict-20261007`。
+[F2分析280914c](https://github.com/futsalife24-bot/work-shift/blob/280914c685d726d6f68ced672789cc76b5682403/analysis/fixed-lock-result/README.md) では、希望休OF／ロック勤務W8で探索OF・書戻しW8となり、赤警告を残して「生成しました」が出ることを確認した。固定勤務W8／ロック年休NENでは赤警告0でも固定不一致1件を残し、赤警告の再計算だけでは防げない。
+
+「ロック・固定入力は保持」という既存の案内に沿い、両立しない勤務コードは `runSolve` の冒頭で検知して生成を止める。対象の社員名・日付・固定コード・ロックコードを既存modalで具体的に通知する。どちらかを優先して上書きせず、入力・保存・以前のundo記録を維持する。確認で通知を閉じ、利用者が入力を揃えた後は従来の生成へ進める。13件以上は全件数に加え「先頭12件」「ほかN件」を明記する。表示内容は既存escでエスケープ。
+
+製品差分は `src/app.js` の17行追加と同じ生成物 `index.html` のみ。F1修正は保持。探索・書戻しの優先順位、担当区だけの衝突、他の生成入口、保存schemaは変更しない。空や不正なコードを新たに有効化・補正する処理は追加せず、同じコード同士は既存の評価へ渡す。
+
+`test-fixed-lock-conflicts.cjs` は実runSolve・solve・applySolution・evaluate・save/loadState・toast・modal・最終チェック文の生成を隔離VMで実行。前分析の正常対照を再利用し、以下の10条件を確認した。
+
+|条件|生成入口の結果|探索／書戻し／保存|
+|---|---|---|
+|固定OF・ロックOF|従来と一致、赤警告0・不一致0|1／1／1|
+|固定OF・未ロックW8|従来どおりOFへ書戻し|1／1／1|
+|固定空欄・ロック空欄|従来の警告表示を維持、赤警告2|1／1／1|
+|固定UNKNOWN・ロックUNKNOWN|従来の警告表示を維持、赤警告2|1／1／1|
+|固定OF・ロックW8|矛盾通知、赤警告8・不一致1を勝手に解消しない|0／0／0|
+|固定W8・ロックNEN|矛盾通知、赤警告0でも不一致1を検出|0／0／0|
+|固定OF・ロック空欄|「空欄」と通知、既存状態保持|0／0／0|
+|固定OF・ロックUNKNOWN|不明コードも文字列で通知、既存状態保持|0／0／0|
+|社員名・コードにHTML記号|通知内でエスケープし要素にしない|0／0／0|
+|矛盾13件|全13件、先頭12件、残1件を明示|0／0／0|
+
+停止6条件で全state・保存JSON・以前のundo・固定入力・セル値が不変、成功toastなし、overlay未開始を確認。確認ボタンの既存closeModalへの接続、および1件/13件の入力を試験側で揃えた後の再生成も照合した。全条件で実save/loadStateの隔離メモリ保存復元が一致。通常2条件と空/不正コード一致2条件は `--compare-base` によりF1基点の実コードと結果・表示・保存回数が一致する。
+
+検証コマンド：`node test-fixed-lock-conflicts.cjs --compare-base`、`node --check src/app.js`、`node --check test-fixed-lock-conflicts.cjs`、`node build.cjs`、`git diff --check`。Node標準機能を使用し、base比較だけGitから当該コミットを読み取る。全探索変数は固定済み、1実行につき探索最大2回・各60,000反復以下・VM15秒上限。通常可動セルの探索品質の試験ではない。F1の成功済み10ケース、無関係な印刷・Excel等の全件試験は繰り返していない。
+
+実画面の局所確認も完了。実装コミット `2af8b17788d745aaca9e56ffcc1bd7c7d4e36c5d` に対し、貸出 `UI-20261007-040` で `test-fixed-lock-ui.cjs` を実行し合格した。通知→確認で閉じる→実パレットから希望と同じOFに修正→再生成→保存再読込、320/390pxで13件通知の12件表示・残1件表示・横はみ出しなし・確認ボタン到達を確認。両幅の画像を目視し、通知文の折返しと確認ボタンが読めることも確認した。JavaScript実行エラー0。実画面での追加不具合はなく、製品コードの追加修正はない。
+
+実行環境はWindows、Node v24.19.0、Playwrightのheadless Edge。`NODE_PATH=C:/Users/futsa/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules`、`BROWSER_CHANNEL=msedge` を指定して `node test-fixed-lock-ui.cjs` を実行。ローカル生成済みindex.html・新規隔離context・架空fixtureのみを使用しHTTP(S)を遮断。確認画像は `C:/Users/futsa/AppData/Local/Temp/work-shift-f2-ui-20261007/f2-modal-320.png` と `f2-modal-390.png` に一時保存した（Gitへ同梱せず、同テストと `F2_SCREENSHOT_DIR` 指定で再生成可能）。終了時に専用contextとブラウザを閉じ、viewport変更も破棄。サーバーは起動せず、`UI-20261007-040 UI解放済み` を親担当へ報告した。成功済みの他試験は繰り返していない。
+
+実職員・実ユーザー保存を使用せず、main統合・Service Worker変更・公開は未実施。指定 `gpt-6-astra/high`、実設定の独立取得は未確認。MainVaultは親担当が記録する。
