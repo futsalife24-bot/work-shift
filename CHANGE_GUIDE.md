@@ -107,6 +107,8 @@ base `c410dfb8fcef36cf7bf46ad8447b60f6e385442a`、専用branch `fix/fixed-lock-c
 
 検証コマンド：`node test-fixed-lock-conflicts.cjs --compare-base`、`node --check src/app.js`、`node --check test-fixed-lock-conflicts.cjs`、`node build.cjs`、`git diff --check`。Node標準機能を使用し、base比較だけGitから当該コミットを読み取る。全探索変数は固定済み、1実行につき探索最大2回・各60,000反復以下・VM15秒上限。通常可動セルの探索品質の試験ではない。F1の成功済み10ケース、無関係な印刷・Excel等の全件試験は繰り返していない。
 
-**実画面の局所確認は未実施。** 共有UIは未貸出のためブラウザを起動していない。親担当へ3〜5分枠を依頼済み。`test-fixed-lock-ui.cjs` は構文確認済みの準備資材であり、成功済みテストとは扱わない。貸出後に通知→確認で閉じる→実パレットから希望と同じ値に修正→再生成→保存復元、320/390pxで13件通知の折返し・確認ボタン到達を確認する。既存のPlaywright/Edge環境なら `BROWSER_CHANNEL=msedge` を指定して `node test-fixed-lock-ui.cjs` を実行する。ローカル生成済みindex.html・新規隔離context・架空fixtureのみを使い、HTTP(S)は遮断する。任意の `F2_SCREENSHOT_DIR` を指定すればローカル確認画像を保存する。
+実画面の局所確認も完了。実装コミット `2af8b17788d745aaca9e56ffcc1bd7c7d4e36c5d` に対し、貸出 `UI-20261007-040` で `test-fixed-lock-ui.cjs` を実行し合格した。通知→確認で閉じる→実パレットから希望と同じOFに修正→再生成→保存再読込、320/390pxで13件通知の12件表示・残1件表示・横はみ出しなし・確認ボタン到達を確認。両幅の画像を目視し、通知文の折返しと確認ボタンが読めることも確認した。JavaScript実行エラー0。実画面での追加不具合はなく、製品コードの追加修正はない。
+
+実行環境はWindows、Node v24.19.0、Playwrightのheadless Edge。`NODE_PATH=C:/Users/futsa/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules`、`BROWSER_CHANNEL=msedge` を指定して `node test-fixed-lock-ui.cjs` を実行。ローカル生成済みindex.html・新規隔離context・架空fixtureのみを使用しHTTP(S)を遮断。確認画像は `C:/Users/futsa/AppData/Local/Temp/work-shift-f2-ui-20261007/f2-modal-320.png` と `f2-modal-390.png` に一時保存した（Gitへ同梱せず、同テストと `F2_SCREENSHOT_DIR` 指定で再生成可能）。終了時に専用contextとブラウザを閉じ、viewport変更も破棄。サーバーは起動せず、`UI-20261007-040 UI解放済み` を親担当へ報告した。成功済みの他試験は繰り返していない。
 
 実職員・実ユーザー保存を使用せず、main統合・Service Worker変更・公開は未実施。指定 `gpt-6-astra/high`、実設定の独立取得は未確認。MainVaultは親担当が記録する。
