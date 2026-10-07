@@ -1,0 +1,112 @@
+{
+  "source": "src/index.html",
+  "cases": {
+    "shortage": {
+      "firstDay": [
+        "OF",
+        "OF"
+      ],
+      "shortage": [
+        {
+          "lv": "hard",
+          "d": 0,
+          "msg": "6/14 8時が1人不足 (0/1)"
+        },
+        {
+          "lv": "hard",
+          "d": 0,
+          "msg": "6/14 中勤が1人不足 (0/1)"
+        }
+      ],
+      "impossible": [
+        "6/14 必要人数を満たせる勤務適性者が足りません",
+        "6/14 担当可能者がいない区: 架空区1・架空区2・架空区3",
+        "6/14 海側・山側の両方を担当できる中勤者がいません"
+      ],
+      "hardCount": 64
+    },
+    "reload": {
+      "cellsFixedAndWarningsUnchanged": true
+    },
+    "boundaries": {
+      "run": [
+        {
+          "lv": "soft",
+          "d": 0,
+          "s": 0,
+          "msg": "架空A 6/14 6連勤"
+        },
+        {
+          "lv": "hard",
+          "d": 1,
+          "s": 0,
+          "msg": "架空A 6/15 7連勤(上限6)"
+        }
+      ],
+      "afterMid8": [
+        {
+          "lv": "hard",
+          "d": 0,
+          "s": 0,
+          "msg": "架空A 6/14 中勤翌日の8時勤務"
+        }
+      ],
+      "afterMid9": [
+        {
+          "lv": "soft",
+          "d": 0,
+          "s": 0,
+          "msg": "架空A 6/14 中勤翌日の9時勤務"
+        }
+      ]
+    },
+    "fairness": {
+      "balanced": 0,
+      "skewed": 64,
+      "excluded": 64,
+      "warningCount": 0
+    },
+    "exemptions": {
+      "supportWarnings": [],
+      "absenceWarnings": [],
+      "falseReasons": [
+        "架空休職 第1週に週休・非番を置ける日がありません",
+        "架空休職 第2週に週休・非番を置ける日がありません",
+        "架空休職 第3週に週休・非番を置ける日がありません",
+        "架空休職 第4週に週休・非番を置ける日がありません",
+        "架空応援 第1週に週休・非番を置ける日がありません",
+        "架空応援 第2週に週休・非番を置ける日がありません",
+        "架空応援 第3週に週休・非番を置ける日がありません",
+        "架空応援 第4週に週休・非番を置ける日がありません"
+      ]
+    },
+    "lockedConflict": {
+      "solverCode": "OF",
+      "savedCode": "W8",
+      "before": [],
+      "after": [
+        {
+          "lv": "hard",
+          "d": 6,
+          "s": 0,
+          "msg": "架空A 6/20 7連勤(上限6)"
+        }
+      ],
+      "reviewMismatch": true,
+      "cellsFixedAndWarningsUnchangedAfterReload": true
+    }
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "reproduced": true,
+      "detail": "応援・休職の除外が解消不能判定へ反映されていない"
+    },
+    {
+      "id": "F2",
+      "reproduced": true,
+      "detail": "固定入力とロックの優先順位が探索・書戻しで不一致"
+    }
+  ],
+  "pageErrors": []
+}
