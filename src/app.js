@@ -1563,6 +1563,23 @@ function distributeNen(holidayMode){
 
 function runSolve(){
   const cyc0=getCycle(ui.curStart);
+  const conflicts=[];
+  for(const st of sortedStaff()) for(let d=0;d<28;d++){
+    const ds=addDays(ui.curStart,d), f=cyc0.fixed[st.id]?.[ds], c=cyc0.cells[st.id]?.[ds];
+    if(f && c?.locked && f.code!==c.code){
+      const label=code=>PRE_LABEL[code]||code||"空欄";
+      conflicts.push(`${st.name} ${mdLabel(ds)}：固定 ${label(f.code)} ／ ロック ${label(c.code)}`);
+    }
+  }
+  if(conflicts.length){
+    openModal(`<h2>固定入力とロックが一致していません</h2>
+      <p>${conflicts.length}件の矛盾があるため生成していません。希望入力とロックしたセルを確認し、入力を揃えてから再度生成してください。</p>
+      <ul>${conflicts.slice(0,12).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>${conflicts.length>12?`<p>先頭12件を表示しています。ほか${conflicts.length-12}件あります。</p>`:""}
+      <div class="row" style="margin-top:14px;"><button class="btn primary" id="solveResultClose">確認</button></div>`);
+    $("#solveResultClose").onclick=closeModal;
+    return;
+  }
+
   ui.undoSnap = { start: ui.curStart, cells: structuredClone(cyc0.cells) };
   $("#solveOverlay").classList.add("open");
   $("#solveMsg").textContent="生成中…(数秒かかります)";
